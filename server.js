@@ -13,9 +13,8 @@ import rateLimit from "express-rate-limit";
 import connectDB from "./config/db.js";
 import { connectRedis } from "./config/redis.js";
 
-// import publicRoutes from "./routes/publicRoutes.js";
 
-// import swaggerRoutes from "./routes/swaggerRoutes.js";
+import swaggerRoutes from "./routes/swaggerRoutes.js";
 // import authRoutes from "./routes/authRoutes.js";
 // import userRoutes from "./routes/userRoutes.js";
 // import adminUserRoutes from "./routes/adminUserRoutes.js";
@@ -102,7 +101,7 @@ if (process.env.NODE_ENV !== "production") {
 
 
 // Swagger
-//app.use("/api-docs", swaggerRoutes);
+app.use("/api-docs", swaggerRoutes);
 
 // =======================
 // Health check
@@ -115,13 +114,11 @@ app.get("/", (req, res) => {
     version: "1.0.0",
   });
 });
-// =======================
-// Public API Routes
-// =======================
-// app.use("/api/public", publicRoutes);
+
+
 
 // =======================
-// Protected  API Routes
+//  API Routes
 // =======================
 // app.use("/api/auth", authRoutes);
 // app.use("/api/users", userRoutes);
