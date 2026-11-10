@@ -15,6 +15,9 @@ import { connectRedis } from "./config/redis.js";
 
 
 import swaggerRoutes from "./routes/swaggerRoutes.js";
+import specialityRoutes from "./routes/specialityRoutes.js";
+
+
 // import authRoutes from "./routes/authRoutes.js";
 // import userRoutes from "./routes/userRoutes.js";
 // import adminUserRoutes from "./routes/adminUserRoutes.js";
@@ -120,6 +123,8 @@ app.get("/", (req, res) => {
 // =======================
 //  API Routes
 // =======================
+app.use("/api/specialities", specialityRoutes);
+
 // app.use("/api/auth", authRoutes);
 // app.use("/api/users", userRoutes);
 // app.use("/api/admin", adminUserRoutes);
