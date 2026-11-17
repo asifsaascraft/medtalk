@@ -2,6 +2,7 @@
 import mongoose from "mongoose";
 
 import Speciality from "../models/Speciality.js";
+import User from "../models/User.js";
 
 import asyncHandler from "../utils/asyncHandler.js";
 
@@ -13,6 +14,10 @@ import {
 import buildSearchQuery from "../utils/search.js";
 import buildSortQuery from "../utils/sort.js";
 import buildFiltersQuery from "../utils/filters.js";
+import {
+  getPagination,
+  buildPaginationMeta,
+} from "../utils/pagination.js";
 
 import {
   getCache,
@@ -20,13 +25,12 @@ import {
   deleteCacheByPattern,
 } from "../utils/redisCache.js";
 
-//==============================
-// Create Speciality
-//==============================
+//==================================================
+// Create Speciality (Admin Only)
+//==================================================
+
 export const createSpeciality = asyncHandler(async (req, res) => {
   const { specialityName } = req.body;
-
-  // Validate
 
   if (!specialityName?.trim()) {
     return errorResponse(res, {
@@ -35,10 +39,10 @@ export const createSpeciality = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check Duplicate
+  const trimmedName = specialityName.trim();
 
   const existingSpeciality = await Speciality.findOne({
-    specialityName: specialityName.trim(),
+    specialityName: trimmedName,
   });
 
   if (existingSpeciality) {
@@ -48,97 +52,160 @@ export const createSpeciality = asyncHandler(async (req, res) => {
     });
   }
 
-  // Create
-
   const speciality = await Speciality.create({
-    specialityName: specialityName.trim(),
+    specialityName: trimmedName,
   });
-
-  // Clear Redis Cache
 
   await deleteCacheByPattern("specialities*");
 
   return successResponse(res, {
     statusCode: 201,
-
     message: "Speciality created successfully.",
-
     data: speciality,
   });
 });
 
-//==============================
-// Get Specialities
-//==============================
-export const getSpecialities = asyncHandler(async (req, res) => {
-  // Search
+//==================================================
+// Get Specialities (Public)
+// For User Registration Dropdown
+//==================================================
 
+export const getSpecialities = asyncHandler(async (req, res) => {
   const searchQuery = buildSearchQuery(req, [
     "specialityName",
   ]);
 
-  // Filters
-
   const filtersQuery = buildFiltersQuery(req, []);
-
-  // Final Query
 
   const query = {
     ...searchQuery,
     ...filtersQuery,
   };
 
-  // Sorting
+  const sort = buildSortQuery(
+    req,
+    ["specialityName", "createdAt", "updatedAt"],
+    "specialityName",
+  );
 
-  const sort = buildSortQuery(req);
-
-  // Cache Key
-
-  const cacheKey = `specialities:${JSON.stringify({
+  const cacheKey = `specialities:public:${JSON.stringify({
     query,
     sort,
   })}`;
-
-  // Check Redis
 
   const cachedData = await getCache(cacheKey);
 
   if (cachedData) {
     return successResponse(res, {
-      message:
-        "Specialities fetched successfully (from cache).",
-
+      message: "Specialities fetched successfully.",
       data: cachedData,
     });
   }
 
-  // MongoDB
+  const specialities = await Speciality.find(query).sort(sort);
 
-  const specialities =
-    await Speciality.find(query).sort(sort);
-
-  // Save Cache
-
-  await setCache(
-    cacheKey,
-    specialities,
-    3600,
-  );
+  await setCache(cacheKey, specialities, 3600);
 
   return successResponse(res, {
     message: "Specialities fetched successfully.",
-
     data: specialities,
   });
 });
 
-//==============================
-// Get Speciality By ID
-//==============================
+//==================================================
+// Get Specialities With User Count (Admin Only)
+// Pagination, Search, Filters and Sorting
+//==================================================
+
+
+export const getSpecialitiesAdmin = asyncHandler(async (req, res) => {
+  // Pagination
+  const { page, limit, skip } = getPagination(req);
+
+  // Search
+  const searchQuery = buildSearchQuery(req, [
+    "specialityName",
+  ]);
+
+  // Filters
+  const filtersQuery = buildFiltersQuery(req, [
+    "specialityName",
+  ]);
+
+  // Final Query
+  const query = {
+    ...searchQuery,
+    ...filtersQuery,
+  };
+
+  // Sorting
+  const sort = buildSortQuery(
+    req,
+    ["specialityName", "createdAt", "updatedAt"],
+    "createdAt",
+  );
+
+  // Total Specialities
+  const total = await Speciality.countDocuments(query);
+
+  // Fetch Specialities With Registered User Count
+  const specialities = await Speciality.aggregate([
+    {
+      $match: query,
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $skip: skip,
+    },
+    {
+      $limit: limit,
+    },
+    {
+      $lookup: {
+        from: User.collection.name,
+        localField: "_id",
+        foreignField: "specialityId",
+        as: "registeredUsers",
+      },
+    },
+    {
+      $addFields: {
+        usersCount: {
+          $size: "$registeredUsers",
+        },
+      },
+    },
+    {
+      $project: {
+        registeredUsers: 0,
+        __v: 0,
+      },
+    },
+  ]);
+
+  // Pagination Metadata
+  const pagination = buildPaginationMeta(
+    total,
+    page,
+    limit,
+  );
+
+  return successResponse(res, {
+    message: "Specialities fetched successfully.",
+    data: specialities,
+    pagination,
+  });
+});
+
+
+//==================================================
+// Get Speciality By ID (Admin Only)
+//==================================================
+
 export const getSpecialityById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  // Validate ObjectId
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return errorResponse(res, {
@@ -147,24 +214,16 @@ export const getSpecialityById = asyncHandler(async (req, res) => {
     });
   }
 
-  // Cache Key
-
   const cacheKey = `speciality:${id}`;
-
-  // Check Redis
 
   const cachedData = await getCache(cacheKey);
 
   if (cachedData) {
     return successResponse(res, {
-      message:
-        "Speciality fetched successfully (from cache).",
-
+      message: "Speciality fetched successfully.",
       data: cachedData,
     });
   }
-
-  // MongoDB
 
   const speciality = await Speciality.findById(id);
 
@@ -175,25 +234,21 @@ export const getSpecialityById = asyncHandler(async (req, res) => {
     });
   }
 
-  // Save Cache
-
   await setCache(cacheKey, speciality, 3600);
 
   return successResponse(res, {
     message: "Speciality fetched successfully.",
-
     data: speciality,
   });
 });
 
-//==============================
-// Update Speciality
-//==============================
+//==================================================
+// Update Speciality (Admin Only)
+//==================================================
+
 export const updateSpeciality = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { specialityName } = req.body;
-
-  // Validate ObjectId
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return errorResponse(res, {
@@ -201,8 +256,6 @@ export const updateSpeciality = asyncHandler(async (req, res) => {
       message: "Invalid speciality ID.",
     });
   }
-
-  // Validate
 
   if (!specialityName?.trim()) {
     return errorResponse(res, {
@@ -211,8 +264,6 @@ export const updateSpeciality = asyncHandler(async (req, res) => {
     });
   }
 
-  // Find Speciality
-
   const speciality = await Speciality.findById(id);
 
   if (!speciality) {
@@ -222,10 +273,10 @@ export const updateSpeciality = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check Duplicate
+  const trimmedName = specialityName.trim();
 
   const existingSpeciality = await Speciality.findOne({
-    specialityName: specialityName.trim(),
+    specialityName: trimmedName,
     _id: { $ne: id },
   });
 
@@ -236,31 +287,26 @@ export const updateSpeciality = asyncHandler(async (req, res) => {
     });
   }
 
-  // Update
-
-  speciality.specialityName = specialityName.trim();
+  speciality.specialityName = trimmedName;
 
   await speciality.save();
-
-  // Clear Redis Cache
 
   await deleteCacheByPattern("specialities*");
   await deleteCacheByPattern("speciality*");
 
   return successResponse(res, {
     message: "Speciality updated successfully.",
-
     data: speciality,
   });
 });
 
-//==============================
-// Delete Speciality
-//==============================
+//==================================================
+// Delete Speciality (Admin Only)
+// Prevent Deletion If Users Are Registered
+//==================================================
+
 export const deleteSpeciality = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-  // Validate ObjectId
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return errorResponse(res, {
@@ -268,8 +314,6 @@ export const deleteSpeciality = asyncHandler(async (req, res) => {
       message: "Invalid speciality ID.",
     });
   }
-
-  // Find Speciality
 
   const speciality = await Speciality.findById(id);
 
@@ -280,11 +324,19 @@ export const deleteSpeciality = asyncHandler(async (req, res) => {
     });
   }
 
-  // Delete
+  // Check whether users are registered under this speciality
+  const usersCount = await User.countDocuments({
+    specialityId: speciality._id,
+  });
+
+  if (usersCount > 0) {
+    return errorResponse(res, {
+      statusCode: 409,
+      message: `Cannot delete this speciality because ${usersCount} user(s) are registered under it.`,
+    });
+  }
 
   await speciality.deleteOne();
-
-  // Clear Redis Cache
 
   await deleteCacheByPattern("specialities*");
   await deleteCacheByPattern("speciality*");

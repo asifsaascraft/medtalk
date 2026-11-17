@@ -1,4 +1,3 @@
-
 import {
   createSpecialityExample,
   updateSpecialityExample,
@@ -67,13 +66,8 @@ const specialityPaths = {
 
       summary: "Get Specialities",
 
-      description: "Get all specialities with search and sorting.",
-
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
+      description:
+        "Public API. Fetch all specialities for the user registration dropdown.",
 
       parameters: [
         {
@@ -311,6 +305,115 @@ const specialityPaths = {
 
         404: {
           description: "Speciality not found.",
+        },
+      },
+    },
+  },
+  //==================================================
+  // Get Specialities With User Count (Admin Only)
+  //==================================================
+
+  "/specialities/admin": {
+    get: {
+      tags: ["Speciality"],
+
+      summary: "Get Specialities With User Count",
+
+      description:
+        "Admin-only API. Fetch specialities with pagination, search, filters, sorting and registered user counts.",
+
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+
+      parameters: [
+        {
+          in: "query",
+          name: "page",
+          schema: {
+            type: "integer",
+            example: 1,
+            minimum: 1,
+          },
+          description: "Page number.",
+        },
+        {
+          in: "query",
+          name: "limit",
+          schema: {
+            type: "integer",
+            example: 20,
+            minimum: 1,
+            maximum: 100,
+          },
+          description: "Number of records per page.",
+        },
+        {
+          in: "query",
+          name: "search",
+          schema: {
+            type: "string",
+            example: "Cardiology",
+          },
+          description: "Search by speciality name.",
+        },
+        {
+          in: "query",
+          name: "sortBy",
+          schema: {
+            type: "string",
+            enum: ["specialityName", "createdAt", "updatedAt"],
+            example: "createdAt",
+          },
+          description: "Field used for sorting.",
+        },
+        {
+          in: "query",
+          name: "order",
+          schema: {
+            type: "string",
+            enum: ["asc", "desc"],
+            example: "desc",
+          },
+          description: "Sorting order.",
+        },
+        {
+          in: "query",
+          name: "specialityName",
+          schema: {
+            type: "string",
+            example: "Cardiology",
+          },
+          description:
+            "Filter by speciality name, according to your filters utility's query format.",
+        },
+      ],
+
+      responses: {
+        200: {
+          description:
+            "Specialities with registered user counts fetched successfully.",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/SpecialitiesAdminResponse",
+              },
+            },
+          },
+        },
+
+        401: {
+          description: "Unauthorized. Access token is missing or invalid.",
+        },
+
+        403: {
+          description: "Forbidden. Admin access required.",
+        },
+
+        500: {
+          description: "Internal server error.",
         },
       },
     },

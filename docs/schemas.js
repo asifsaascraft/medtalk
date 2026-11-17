@@ -14,6 +14,11 @@ export const schemas = {
         type: "string",
         example: "Cardiology",
       },
+      usersCount: {
+        type: "integer",
+        example: 25,
+        description: "Number of users registered under this speciality.",
+      },
       createdAt: {
         type: "string",
         format: "date-time",
@@ -47,6 +52,59 @@ export const schemas = {
       specialityName: {
         type: "string",
         example: "Neurology",
+      },
+    },
+  },
+
+  SpecialitiesAdminResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Specialities fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          allOf: [
+            {
+              $ref: "#/components/schemas/Speciality",
+            },
+          ],
+        },
+      },
+      meta: {
+        type: "object",
+        properties: {
+          page: {
+            type: "integer",
+            example: 1,
+          },
+          limit: {
+            type: "integer",
+            example: 20,
+          },
+          total: {
+            type: "integer",
+            example: 50,
+          },
+          totalPages: {
+            type: "integer",
+            example: 3,
+          },
+          hasPreviousPage: {
+            type: "boolean",
+            example: false,
+          },
+          hasNextPage: {
+            type: "boolean",
+            example: true,
+          },
+        },
       },
     },
   },
