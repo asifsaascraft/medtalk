@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const UserSessionSchema = new mongoose.Schema(
@@ -7,15 +8,13 @@ const UserSessionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
-    // Session
+    // Session Information
     sessionId: {
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
 
     refreshTokenHash: {
@@ -75,6 +74,7 @@ const UserSessionSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+      index: true,
     },
 
     lastActivityAt: {
@@ -91,23 +91,45 @@ const UserSessionSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    revokedAt: {
+      type: Date,
+      default: null,
+    },
+
+    revokeReason: {
+      type: String,
+      enum: [
+        "logout",
+        "logout_all",
+        "password_changed",
+        "admin_action",
+        "expired",
+        "new_login",
+      ],
+      default: null,
+    },
   },
   {
     timestamps: true,
   },
 );
 
-// Indexes
-UserSessionSchema.index({
-  user: 1,
-  isActive: 1,
-});
-
-
+// Only one active session per user.
+// Inactive historical sessions are allowed.
 UserSessionSchema.index(
+  { user: 1 },
   {
-    expiresAt: 1,
+    unique: true,
+    partialFilterExpression: {
+      isActive: true,
+    },
   },
+);
+
+// Session expiry: MongoDB deletes expired records automatically.
+UserSessionSchema.index(
+  { expiresAt: 1 },
   {
     expireAfterSeconds: 0,
   },
@@ -115,21 +137,46 @@ UserSessionSchema.index(
 
 // Virtual
 UserSessionSchema.virtual("isExpired").get(function () {
-  return this.expiresAt < new Date();
+  return this.expiresAt <= new Date();
 });
 
-// Method
+// Update last activity at most once every five minutes.
 UserSessionSchema.methods.touch = async function () {
   const now = new Date();
 
-  const diff = now - this.lastActivityAt;
-
-  if (diff > 5 * 60 * 1000) {
+  if (
+    !this.lastActivityAt ||
+    now.getTime() - this.lastActivityAt.getTime() >
+      5 * 60 * 1000
+  ) {
     this.lastActivityAt = now;
     await this.save();
   }
 };
 
+// Revoke session
+UserSessionSchema.methods.revoke = async function (
+  reason = "logout",
+) {
+  this.isActive = false;
+  this.loggedOutAt = new Date();
+  this.revokedAt = new Date();
+  this.revokeReason = reason;
+
+  await this.save();
+};
+
+// JSON Transform
+UserSessionSchema.set("toJSON", {
+  transform(doc, ret) {
+    delete ret.refreshTokenHash;
+    delete ret.__v;
+
+    return ret;
+  },
+});
+
+// Export
 const UserSession =
   mongoose.models.UserSession ||
   mongoose.model("UserSession", UserSessionSchema);

@@ -1,3 +1,4 @@
+
 import swaggerJsdoc from "swagger-jsdoc";
 
 import paths from "./index.js";
@@ -9,10 +10,9 @@ const options = {
 
     info: {
       title: "MedTalk API",
-
       version: "1.0.0",
-
-      description: "Official REST API documentation for the MedTalk Backend.",
+      description:
+        "Official REST API documentation for the MedTalk Backend.",
     },
 
     servers: [
@@ -29,17 +29,19 @@ const options = {
     tags: [
       {
         name: "Authentication",
-        description: "Authentication APIs",
+        description: "User authentication and session management APIs.",
       },
-
       {
         name: "Users",
-        description: "User APIs",
+        description: "User registration and user-related APIs.",
       },
-
       {
         name: "Admin",
-        description: "Admin APIs",
+        description: "Admin account and authentication APIs.",
+      },
+      {
+        name: "Speciality",
+        description: "Speciality management APIs.",
       },
     ],
 
@@ -47,16 +49,24 @@ const options = {
       securitySchemes: {
         bearerAuth: {
           type: "http",
-
           scheme: "bearer",
-
           bearerFormat: "JWT",
+        },
+
+        refreshCookie: {
+          type: "apiKey",
+          in: "cookie",
+          name: "refreshToken",
+          description:
+            "HTTP-only refresh token cookie set automatically after successful login.",
         },
       },
 
       schemas,
     },
 
+    // Protected by default.
+    // Public endpoints override this using security: [].
     security: [
       {
         bearerAuth: [],

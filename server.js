@@ -1,8 +1,6 @@
-// Configure DNS first
+
 import "./config/dns.js";
 
-// import dotenv from "dotenv";
-// dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -10,18 +8,15 @@ import compression from "compression";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
+
 import connectDB from "./config/db.js";
 import { connectRedis } from "./config/redis.js";
 
-
 import swaggerRoutes from "./routes/swaggerRoutes.js";
 import specialityRoutes from "./routes/specialityRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
-
-// import authRoutes from "./routes/authRoutes.js";
-// import userRoutes from "./routes/userRoutes.js";
-// import adminUserRoutes from "./routes/adminUserRoutes.js";
-
+import errorHandler from "./middlewares/errorHandler.js";
 
 // Connect Database
 await connectDB();
@@ -31,7 +26,8 @@ await connectRedis();
 
 const app = express();
 
-// Trust the first reverse proxy (Nginx)
+// Trust the first reverse proxy.
+// Ensure this matches your actual deployment topology.
 app.set("trust proxy", 1);
 
 // Allowed Origins
@@ -41,31 +37,29 @@ const allowedOrigins = [
   "http://localhost:3002",
   process.env.ADMIN_FRONTEND_URL,
   process.env.USER_FRONTEND_URL,
-];
+]
+  .filter(Boolean)
+  .map((origin) => origin.replace(/\/$/, ""));
 
 // CORS Configuration
-// const corsOptions = {
-//   origin(origin, callback) {
-//     if (!origin) {
-//       return callback(null, true);
-//     }
-
-//     if (allowedOrigins.includes(origin)) {
-//       return callback(null, true);
-//     }
-
-//     return callback(new Error("Not allowed by CORS."));
-//   },
-
-//   credentials: true,
-// };
-
-// CORS for now all origin allowed for testing
 const corsOptions = {
-  origin: (origin, callback) => {
-    // allow any origin (including browser requests)
-    callback(null, true);
+  origin(origin, callback) {
+    // Allow Postman, server-to-server requests and other
+    // clients that do not send an Origin header.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin.replace(/\/$/, ""))) {
+      return callback(null, true);
+    }
+
+    const error = new Error("Not allowed by CORS.");
+    error.statusCode = 403;
+
+    return callback(error);
   },
+
   credentials: true,
 };
 
@@ -87,14 +81,18 @@ app.use(compression());
 app.use(cors(corsOptions));
 app.use(limiter);
 
-app.use(express.json({
-  limit: "10mb",
-}));
+app.use(
+  express.json({
+    limit: "10mb",
+  }),
+);
 
-app.use(express.urlencoded({
-  extended: true,
-  limit: "10mb",
-}));
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "10mb",
+  }),
+);
 
 app.use(cookieParser());
 
@@ -102,13 +100,10 @@ if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
 
-
 // Swagger
 app.use("/api-docs", swaggerRoutes);
 
-// =======================
-// Health check
-// =======================
+// Health Check
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -118,17 +113,9 @@ app.get("/", (req, res) => {
   });
 });
 
-
-
-// =======================
-//  API Routes
-// =======================
+// API Routes
 app.use("/api/specialities", specialityRoutes);
-
-// app.use("/api/auth", authRoutes);
-// app.use("/api/users", userRoutes);
-// app.use("/api/admin", adminUserRoutes);
-
+app.use("/api/auth", authRoutes);
 
 
 // 404 Route
@@ -140,18 +127,11 @@ app.use((req, res) => {
 });
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-  console.error(err);
+app.use(errorHandler);
 
-  return res.status(err.statusCode || 500).json({
-    success: false,
-    message: err.message || "Internal server error.",
-  });
-});
-
-
-// =======================
-// Start server
-// =======================
+// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});

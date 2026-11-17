@@ -1,15 +1,10 @@
-// utils/sendEmail.js
-import dotenv from "dotenv";
-import { SendMailClient } from "zeptomail";
 
-dotenv.config();
+import { SendMailClient } from "zeptomail";
 
 const client = new SendMailClient({
   url: process.env.ZEPTO_URL,
   token: process.env.ZEPTO_TOKEN,
 });
-
-// Send ZeptoMail Template Email
 
 const sendEmail = async ({
   to,
@@ -34,23 +29,26 @@ const sendEmail = async ({
         address: process.env.ZEPTO_FROM,
         name: "MedTalk",
       },
+
       to: [
         {
           email_address: {
             address: to,
-            name,
+            name: name || "",
           },
         },
       ],
 
       subject,
-
       merge_info: mergeInfo,
     });
 
     return response;
   } catch (error) {
-    console.error("ZeptoMail Error:", JSON.stringify(error, null, 2));
+    console.error("ZeptoMail Error:", {
+      message: error.message,
+      status: error.status,
+    });
 
     throw error;
   }

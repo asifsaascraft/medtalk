@@ -1,8 +1,6 @@
 // config/s3.js
 import { S3Client } from "@aws-sdk/client-s3";
-import dotenv from "dotenv";
 
-dotenv.config();
 
 // Create an S3Client instance using AWS SDK v3
 const s3 = new S3Client({
