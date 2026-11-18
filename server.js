@@ -15,6 +15,8 @@ import { connectRedis } from "./config/redis.js";
 import swaggerRoutes from "./routes/swaggerRoutes.js";
 import specialityRoutes from "./routes/specialityRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import facultyRoutes from "./routes/facultyRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 
@@ -116,6 +118,8 @@ app.get("/", (req, res) => {
 // API Routes
 app.use("/api/specialities", specialityRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/faculties", facultyRoutes);
+app.use("/api/users", userRoutes);
 
 
 // 404 Route

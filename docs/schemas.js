@@ -452,6 +452,396 @@ export const schemas = {
       },
     },
   },
+
+  //==================================================
+  // Faculty
+  //==================================================
+
+  Faculty: {
+    type: "object",
+    properties: {
+      _id: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+      fullName: {
+        type: "string",
+        example: "Dr. Rahul Sharma",
+      },
+      email: {
+        type: "string",
+        format: "email",
+        example: "rahul.sharma@example.com",
+      },
+      mobile: {
+        type: "string",
+        example: "9876543210",
+      },
+      affiliation: {
+        type: "string",
+        example: "Apollo Hospital",
+      },
+      specialityId: {
+        type: "object",
+        properties: {
+          _id: {
+            type: "string",
+            example: "672a12345678901234567890",
+          },
+          specialityName: {
+            type: "string",
+            example: "Cardiology",
+          },
+        },
+      },
+      createdAt: {
+        type: "string",
+        format: "date-time",
+      },
+      updatedAt: {
+        type: "string",
+        format: "date-time",
+      },
+    },
+  },
+
+  //==================================================
+  // Faculty Request Schemas
+  //==================================================
+
+  CreateFacultyRequest: {
+    type: "object",
+    required: ["fullName", "email", "mobile", "affiliation", "specialityId"],
+    properties: {
+      fullName: {
+        type: "string",
+        example: "Dr. Rahul Sharma",
+        minLength: 2,
+        maxLength: 100,
+      },
+      email: {
+        type: "string",
+        format: "email",
+        example: "rahul.sharma@example.com",
+      },
+      mobile: {
+        type: "string",
+        example: "9876543210",
+      },
+      affiliation: {
+        type: "string",
+        example: "Apollo Hospital",
+      },
+      specialityId: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+    },
+  },
+
+  UpdateFacultyRequest: {
+    type: "object",
+    required: ["fullName", "email", "mobile", "affiliation", "specialityId"],
+    properties: {
+      fullName: {
+        type: "string",
+        example: "Dr. Rahul Sharma",
+      },
+      email: {
+        type: "string",
+        format: "email",
+        example: "rahul.sharma@example.com",
+      },
+      mobile: {
+        type: "string",
+        example: "9876543210",
+      },
+      affiliation: {
+        type: "string",
+        example: "Yashoda Hospital",
+      },
+      specialityId: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+    },
+  },
+
+  //==================================================
+  // Faculty Responses
+  //==================================================
+
+  FacultySuccessResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Faculty fetched successfully.",
+      },
+      data: {
+        $ref: "#/components/schemas/Faculty",
+      },
+    },
+  },
+
+  FacultiesListResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Faculties fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/Faculty",
+        },
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          page: {
+            type: "integer",
+            example: 1,
+          },
+          limit: {
+            type: "integer",
+            example: 20,
+          },
+          total: {
+            type: "integer",
+            example: 50,
+          },
+          totalPages: {
+            type: "integer",
+            example: 3,
+          },
+          from: {
+            type: "integer",
+            example: 1,
+          },
+          to: {
+            type: "integer",
+            example: 20,
+          },
+          hasPreviousPage: {
+            type: "boolean",
+            example: false,
+          },
+          hasNextPage: {
+            type: "boolean",
+            example: true,
+          },
+        },
+      },
+    },
+  },
+
+  //==================================================
+  // User Management
+  //==================================================
+
+  UserManagementUser: {
+    type: "object",
+    properties: {
+      _id: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+      fullName: {
+        type: "string",
+        example: "Rahul Sharma",
+      },
+      email: {
+        type: "string",
+        format: "email",
+        example: "rahul.sharma@example.com",
+      },
+      mobile: {
+        type: "string",
+        example: "9876543210",
+      },
+      affiliation: {
+        type: "string",
+        example: "Apollo Hospital",
+      },
+      specialityId: {
+        type: "object",
+        properties: {
+          _id: {
+            type: "string",
+            example: "672a12345678901234567890",
+          },
+          specialityName: {
+            type: "string",
+            example: "Cardiology",
+          },
+        },
+      },
+      profileImage: {
+        type: "string",
+        nullable: true,
+        example: null,
+      },
+      role: {
+        type: "string",
+        example: "user",
+      },
+      status: {
+        type: "string",
+        enum: ["pending", "active"],
+        example: "active",
+      },
+      createdAt: {
+        type: "string",
+        format: "date-time",
+      },
+      updatedAt: {
+        type: "string",
+        format: "date-time",
+      },
+    },
+  },
+
+  UpdateUserProfileRequest: {
+    type: "object",
+    properties: {
+      fullName: {
+        type: "string",
+        minLength: 2,
+        maxLength: 100,
+        example: "Rahul Sharma",
+      },
+      email: {
+        type: "string",
+        format: "email",
+        example: "rahul.sharma@example.com",
+      },
+      mobile: {
+        type: "string",
+        example: "9876543210",
+      },
+      affiliation: {
+        type: "string",
+        minLength: 2,
+        maxLength: 300,
+        example: "Yashoda Hospital",
+      },
+      specialityId: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+      profileImage: {
+        type: "string",
+        nullable: true,
+        example: null,
+      },
+    },
+    description:
+      "All fields are optional. Only profile fields can be updated. Role, password and authentication fields cannot be changed through this API.",
+  },
+
+  UsersListResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Users fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/UserManagementUser",
+        },
+      },
+    },
+  },
+
+  UsersPaginatedResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Users fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/UserManagementUser",
+        },
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          page: {
+            type: "integer",
+            example: 1,
+          },
+          limit: {
+            type: "integer",
+            example: 20,
+          },
+          total: {
+            type: "integer",
+            example: 100,
+          },
+          totalPages: {
+            type: "integer",
+            example: 5,
+          },
+          from: {
+            type: "integer",
+            example: 1,
+          },
+          to: {
+            type: "integer",
+            example: 20,
+          },
+          hasPreviousPage: {
+            type: "boolean",
+            example: false,
+          },
+          hasNextPage: {
+            type: "boolean",
+            example: true,
+          },
+        },
+      },
+    },
+  },
+
+  UserProfileSuccessResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "User profile updated successfully.",
+      },
+      data: {
+        $ref: "#/components/schemas/UserManagementUser",
+      },
+    },
+  },
 };
 
 export default schemas;

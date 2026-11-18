@@ -2,26 +2,13 @@ import mongoose from "mongoose";
 
 const ConferenceSchema = new mongoose.Schema(
   {
-    // Conference Information
-    conferenceTypeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ConferenceType",
-      required: [true, "Conference Type is required."],
-      index: true,
-    },
+    
     conferenceName: {
       type: String,
       required: [true, "Conference name is required."],
       trim: true,
       unique: true,
       maxlength: 150,
-    },
-    conferenceShortName: {
-      type: String,
-      required: [true, "Conference short name is required."],
-      trim: true,
-      unique: true,
-      maxlength: 20,
     },
     startDate: {
       type: Date,

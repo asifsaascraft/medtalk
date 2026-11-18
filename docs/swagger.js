@@ -1,4 +1,3 @@
-
 import swaggerJsdoc from "swagger-jsdoc";
 
 import paths from "./index.js";
@@ -11,8 +10,7 @@ const options = {
     info: {
       title: "MedTalk API",
       version: "1.0.0",
-      description:
-        "Official REST API documentation for the MedTalk Backend.",
+      description: "Official REST API documentation for the MedTalk Backend.",
     },
 
     servers: [
@@ -42,6 +40,10 @@ const options = {
       {
         name: "Speciality",
         description: "Speciality management APIs.",
+      },
+      {
+        name: "Faculty",
+        description: "Faculty management APIs. Admin access only.",
       },
     ],
 

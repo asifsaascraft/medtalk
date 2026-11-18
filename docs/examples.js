@@ -79,3 +79,41 @@ export const verifyEmailOtpExample = {
   email: "testuser@example.com",
   otp: "123456",
 };
+
+
+ //==================================================
+ // Faculty Examples
+ //==================================================
+
+// Create Faculty
+export const createFacultyExample = {
+  fullName: "Dr. Rahul Sharma",
+  email: "rahul.sharma@example.com",
+  mobile: "9876543210",
+  affiliation: "Apollo Hospital",
+  specialityId: "672a12345678901234567890",
+};
+
+// Update Faculty
+export const updateFacultyExample = {
+  fullName: "Dr. Rahul Sharma",
+  email: "rahul.sharma@example.com",
+  mobile: "9876543210",
+  affiliation: "Yashoda Hospital",
+  specialityId: "672a12345678901234567890",
+};
+
+
+ //==================================================
+ // User Management Examples
+ //==================================================
+
+// Update User Profile
+export const updateUserProfileExample = {
+  fullName: "Rahul Sharma",
+  email: "rahul.sharma@example.com",
+  mobile: "9876543210",
+  affiliation: "Yashoda Hospital",
+  specialityId: "672a12345678901234567890",
+  profileImage: null,
+};
