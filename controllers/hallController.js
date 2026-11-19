@@ -104,7 +104,7 @@ const buildHallQuery = (req, extraQuery = {}) => {
 const populateConference = (query) => {
   return query.populate(
     "conferenceId",
-    "conferenceName startDateTime endDateTime"
+    "conferenceName startDateTime endDateTime venue"
   );
 };
 
