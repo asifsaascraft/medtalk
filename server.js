@@ -18,6 +18,7 @@ import authRoutes from "./routes/authRoutes.js";
 import facultyRoutes from "./routes/facultyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import conferenceRoutes from "./routes/conferenceRoutes.js";
+import hallRoutes from "./routes/hallRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 
@@ -122,7 +123,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/faculties", facultyRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/conferences", conferenceRoutes);
-
+app.use("/api/conferences/:conferenceId/halls", hallRoutes);
 // 404 Route
 app.use((req, res) => {
   res.status(404).json({

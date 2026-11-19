@@ -1132,6 +1132,189 @@ export const schemas = {
       },
     },
   },
+
+  Hall: {
+    type: "object",
+    properties: {
+      _id: {
+        type: "string",
+        example: "672b12345678901234567890",
+      },
+      conferenceId: {
+        oneOf: [
+          {
+            type: "string",
+            example: "672a12345678901234567890",
+          },
+          {
+            type: "object",
+            properties: {
+              _id: {
+                type: "string",
+              },
+              conferenceName: {
+                type: "string",
+              },
+            },
+          },
+        ],
+      },
+      hallName: {
+        type: "string",
+        example: "Main Auditorium",
+      },
+      streamLink: {
+        type: "string",
+        format: "uri",
+        example: "https://example.com/live-stream",
+      },
+      status: {
+        type: "string",
+        enum: ["Active", "Inactive"],
+        example: "Active",
+      },
+      createdAt: {
+        type: "string",
+        format: "date-time",
+      },
+      updatedAt: {
+        type: "string",
+        format: "date-time",
+      },
+    },
+  },
+
+  CreateHallRequest: {
+    type: "object",
+    required: ["hallName", "streamLink"],
+    properties: {
+      hallName: {
+        type: "string",
+        minLength: 2,
+        maxLength: 100,
+        example: "Main Auditorium",
+      },
+      streamLink: {
+        type: "string",
+        format: "uri",
+        example: "https://example.com/live-stream",
+      },
+      status: {
+        type: "string",
+        enum: ["Active", "Inactive"],
+        default: "Active",
+      },
+    },
+  },
+
+  UpdateHallRequest: {
+    type: "object",
+    minProperties: 1,
+    properties: {
+      hallName: {
+        type: "string",
+        minLength: 2,
+        maxLength: 100,
+        example: "Updated Main Auditorium",
+      },
+      streamLink: {
+        type: "string",
+        format: "uri",
+        example: "https://example.com/new-live-stream",
+      },
+      status: {
+        type: "string",
+        enum: ["Active", "Inactive"],
+        example: "Inactive",
+      },
+    },
+  },
+
+  HallResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Hall fetched successfully.",
+      },
+      data: {
+        $ref: "#/components/schemas/Hall",
+      },
+    },
+  },
+
+  HallsResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Halls fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/Hall",
+        },
+      },
+    },
+  },
+
+  PaginatedHallsResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Halls fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/Hall",
+        },
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          total: {
+            type: "integer",
+            example: 25,
+          },
+          page: {
+            type: "integer",
+            example: 1,
+          },
+          limit: {
+            type: "integer",
+            example: 20,
+          },
+          totalPages: {
+            type: "integer",
+            example: 2,
+          },
+          hasNextPage: {
+            type: "boolean",
+            example: true,
+          },
+          hasPrevPage: {
+            type: "boolean",
+            example: false,
+          },
+        },
+      },
+    },
+  },
 };
 
 export default schemas;

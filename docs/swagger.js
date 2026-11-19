@@ -50,6 +50,10 @@ const options = {
         description:
           "Conference management, uploads and public conference APIs.",
       },
+      {
+        name: "Admin - Halls",
+        description: "Manage Conference Halls and their live stream links.",
+      },
     ],
 
     components: {
