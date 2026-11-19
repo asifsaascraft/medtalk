@@ -17,6 +17,7 @@ import specialityRoutes from "./routes/specialityRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import facultyRoutes from "./routes/facultyRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import conferenceRoutes from "./routes/conferenceRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 
@@ -120,7 +121,7 @@ app.use("/api/specialities", specialityRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/faculties", facultyRoutes);
 app.use("/api/users", userRoutes);
-
+app.use("/api/conferences", conferenceRoutes);
 
 // 404 Route
 app.use((req, res) => {

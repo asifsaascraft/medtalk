@@ -1,187 +1,127 @@
+
 import mongoose from "mongoose";
 
 const ConferenceSchema = new mongoose.Schema(
   {
-    
     conferenceName: {
       type: String,
       required: [true, "Conference name is required."],
       trim: true,
       unique: true,
-      maxlength: 150,
+      maxlength: [150, "Conference name cannot exceed 150 characters."],
     },
-    startDate: {
-      type: Date,
-      required: [true, "Start Date is required"],
+
+    specialityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Speciality",
+      required: [true, "Speciality is required."],
     },
-    endDate: {
+
+    startDateTime: {
       type: Date,
+      required: [true, "Start date time is required."],
+    },
+
+    endDateTime: {
+      type: Date,
+      required: [true, "End date time is required."],
       validate: {
         validator: function (value) {
-          if (!this.startDate || !value) return true;
-          return value >= this.startDate;
+          if (!this.startDateTime || !value) return true;
+          return value >= this.startDateTime;
         },
-        message: "End date must be greater than or equal to start date",
+        message:
+          "End date time must be greater than or equal to start date time.",
       },
-      required: [true, "End Date is required"],
-    },
-    month: {
-      type: String,
-      required: [true, "Month is required."],
-      trim: true,
-    },
-    year: {
-      type: String,
-      required: [true, "year is required."],
-      trim: true,
-    },
-    entryTypeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "EntryType",
-      required: [true, "Entry Type is required."],
-      index: true,
-    },
-    city: {
-      type: String,
-      required: [true, "City is required."],
-      trim: true,
-      maxlength: 100,
-    },
-    stateId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "State",
-      required: [true, "State is required."],
-      index: true,
-    },
-    venueId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Venue",
-      required: [true, "Venue is required."],
-      index: true,
-    },
-    website: {
-      type: String,
-      required: [true, "Website link is required."],
-      trim: true,
-      maxlength: 255,
-    },
-    companyId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Company",
-    },
-    conferenceSegmentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ConferenceSegment",
-    },
-    associationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Association",
-    },
-    uploadConferenceLogo: {
-      type: String,
-      default: null,
-    },
-    committeeMember: {
-      type: String,
-      trim: true,
-    },
-    frequency: {
-      type: String,
-      trim: true,
-    },
-    aboutConference: {
-      type: String,
-      trim: true,
-    },
-    featured: {
-      type: Boolean,
-      default: false,
-      index: true,
     },
 
-    // Approval Status
+    venue: {
+      type: String,
+      required: [true, "Venue is required."],
+      trim: true,
+    },
+
+    conferenceType: {
+      type: String,
+      enum: {
+        values: ["Paid", "Free", "Restricted"],
+        message: "Conference type must be Paid, Free, or Restricted.",
+      },
+      required: [true, "Conference type is required."],
+    },
+
+    amount: {
+      type: Number,
+      min: [0, "Amount cannot be negative."],
+      required: function () {
+        return this.conferenceType === "Paid";
+      },
+      validate: {
+        validator: function (value) {
+          if (this.conferenceType !== "Paid") {
+            return value === undefined || value === null;
+          }
+          return value !== undefined && value !== null;
+        },
+        message:
+          "Amount is only allowed for Paid conferences.",
+      },
+    },
+
+    image: {
+      type: String,
+      required: [true, "Image is required."],
+      trim: true,
+    },
+
+    banner: {
+      type: String,
+      required: [true, "Banner is required."],
+      trim: true,
+    },
+
+    brochureUpload: {
+      type: String,
+      required: [true, "Brochure is required."],
+      trim: true,
+    },
+
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "pending",
-      index: true,
-    },
-
-    // Audit Information
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      enum: {
+        values: ["Active", "Inactive"],
+        message: "Status must be Active or Inactive.",
+      },
+      default: "Active",
       required: true,
-      index: true,
-    },
-
-    updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
-    approvedAt: {
-      type: Date,
-      default: null,
-    },
-
-    rejectedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-
-    rejectedAt: {
-      type: Date,
-      default: null,
-    },
-    rejectionReason: {
-      type: String,
-      trim: true,
-      maxlength: 500,
-      default: null,
     },
   },
   {
     timestamps: true,
-  },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 // Indexes
-ConferenceSchema.index({
-  createdAt: -1,
-});
+ConferenceSchema.index({ createdAt: -1 });
 
 // Dynamic Conference Status
 ConferenceSchema.virtual("dynamicStatus").get(function () {
-  if (!this.startDate || !this.endDate) {
+  if (!this.startDateTime || !this.endDateTime) {
     return null;
   }
 
-  const today = new Date();
+  const now = new Date();
 
-  // Ignore time part
-  today.setHours(0, 0, 0, 0);
-
-  const startDate = new Date(this.startDate);
-  startDate.setHours(0, 0, 0, 0);
-
-  const endDate = new Date(this.endDate);
-  endDate.setHours(23, 59, 59, 999);
-
-  if (today < startDate) {
+  if (now < this.startDateTime) {
     return "Upcoming";
   }
-  if (today > endDate) {
+
+  if (now > this.endDateTime) {
     return "Past";
   }
+
   return "Live";
 });
 
@@ -195,13 +135,9 @@ ConferenceSchema.set("toJSON", {
   },
 });
 
-ConferenceSchema.set("toObject", {
-  virtuals: true,
-});
-
-
 // Export
 const Conference =
-  mongoose.models.Conference || mongoose.model("Conference", ConferenceSchema);
+  mongoose.models.Conference ||
+  mongoose.model("Conference", ConferenceSchema);
 
 export default Conference;

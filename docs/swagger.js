@@ -45,6 +45,11 @@ const options = {
         name: "Faculty",
         description: "Faculty management APIs. Admin access only.",
       },
+      {
+        name: "Conference",
+        description:
+          "Conference management, uploads and public conference APIs.",
+      },
     ],
 
     components: {

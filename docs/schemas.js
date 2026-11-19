@@ -842,6 +842,296 @@ export const schemas = {
       },
     },
   },
+
+  Conference: {
+    type: "object",
+    properties: {
+      _id: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+      conferenceName: {
+        type: "string",
+        example: "Annual Medical Conference 2026",
+      },
+      specialityId: {
+        oneOf: [
+          { type: "string" },
+          { $ref: "#/components/schemas/Speciality" },
+        ],
+      },
+      startDateTime: {
+        type: "string",
+        format: "date-time",
+        example: "2026-12-10T09:00:00.000Z",
+      },
+      endDateTime: {
+        type: "string",
+        format: "date-time",
+        example: "2026-12-12T18:00:00.000Z",
+      },
+      venue: {
+        type: "string",
+        example: "Hyderabad International Convention Centre",
+      },
+      conferenceType: {
+        type: "string",
+        enum: ["Paid", "Free", "Restricted"],
+        example: "Paid",
+      },
+      amount: {
+        type: "number",
+        nullable: true,
+        example: 1500,
+      },
+      image: {
+        type: "string",
+        format: "uri",
+        example:
+          "https://bucket.s3.ap-south-1.amazonaws.com/conferences/images/image.jpg",
+      },
+      banner: {
+        type: "string",
+        format: "uri",
+        example:
+          "https://bucket.s3.ap-south-1.amazonaws.com/conferences/images/banner.jpg",
+      },
+      brochureUpload: {
+        type: "string",
+        format: "uri",
+        example:
+          "https://bucket.s3.ap-south-1.amazonaws.com/conferences/brochures/brochure.pdf",
+      },
+      status: {
+        type: "string",
+        enum: ["Active", "Inactive"],
+        example: "Active",
+      },
+      dynamicStatus: {
+        type: "string",
+        nullable: true,
+        enum: ["Upcoming", "Live", "Past"],
+        example: "Upcoming",
+      },
+      createdAt: {
+        type: "string",
+        format: "date-time",
+      },
+      updatedAt: {
+        type: "string",
+        format: "date-time",
+      },
+    },
+  },
+
+  ConferenceRequest: {
+    type: "object",
+    required: [
+      "conferenceName",
+      "specialityId",
+      "startDateTime",
+      "endDateTime",
+      "venue",
+      "conferenceType",
+      "image",
+      "banner",
+      "brochureUpload",
+    ],
+    properties: {
+      conferenceName: {
+        type: "string",
+        example: "Annual Medical Conference 2026",
+      },
+      specialityId: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+      startDateTime: {
+        type: "string",
+        format: "date-time",
+        example: "2026-12-10T09:00:00.000Z",
+      },
+      endDateTime: {
+        type: "string",
+        format: "date-time",
+        example: "2026-12-12T18:00:00.000Z",
+      },
+      venue: {
+        type: "string",
+        example: "Hyderabad International Convention Centre",
+      },
+      conferenceType: {
+        type: "string",
+        enum: ["Paid", "Free", "Restricted"],
+        example: "Paid",
+      },
+      amount: {
+        type: "number",
+        minimum: 0,
+        example: 1500,
+        description: "Required only when conferenceType is Paid.",
+      },
+      image: {
+        type: "string",
+        format: "binary",
+        description: "Conference image. JPG, JPEG, PNG or WEBP. Maximum 5MB.",
+      },
+      banner: {
+        type: "string",
+        format: "binary",
+        description: "Conference banner. JPG, JPEG, PNG or WEBP. Maximum 5MB.",
+      },
+      brochureUpload: {
+        type: "string",
+        format: "binary",
+        description: "Conference brochure PDF. Maximum 10MB.",
+      },
+      status: {
+        type: "string",
+        enum: ["Active", "Inactive"],
+        default: "Active",
+      },
+    },
+  },
+
+  ConferenceSuccessResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Conference fetched successfully.",
+      },
+      data: {
+        $ref: "#/components/schemas/Conference",
+      },
+    },
+  },
+
+  ConferencesListResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Conferences fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/Conference",
+        },
+      },
+    },
+  },
+
+  ConferencesPaginatedResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Conferences fetched successfully.",
+      },
+      data: {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/Conference",
+        },
+      },
+      pagination: {
+        type: "object",
+        properties: {
+          total: {
+            type: "integer",
+            example: 45,
+          },
+          page: {
+            type: "integer",
+            example: 1,
+          },
+          limit: {
+            type: "integer",
+            example: 20,
+          },
+          totalPages: {
+            type: "integer",
+            example: 3,
+          },
+          hasNextPage: {
+            type: "boolean",
+            example: true,
+          },
+          hasPrevPage: {
+            type: "boolean",
+            example: false,
+          },
+        },
+      },
+    },
+  },
+
+  ConferenceUpdateRequest: {
+    type: "object",
+    properties: {
+      conferenceName: {
+        type: "string",
+        example: "Annual Medical Conference 2026",
+      },
+      specialityId: {
+        type: "string",
+        example: "672a12345678901234567890",
+      },
+      startDateTime: {
+        type: "string",
+        format: "date-time",
+      },
+      endDateTime: {
+        type: "string",
+        format: "date-time",
+      },
+      venue: {
+        type: "string",
+        example: "Hyderabad International Convention Centre",
+      },
+      conferenceType: {
+        type: "string",
+        enum: ["Paid", "Free", "Restricted"],
+      },
+      amount: {
+        type: "number",
+        minimum: 0,
+      },
+      image: {
+        type: "string",
+        format: "binary",
+        description: "Optional replacement image. Maximum 5MB.",
+      },
+      banner: {
+        type: "string",
+        format: "binary",
+        description: "Optional replacement banner. Maximum 5MB.",
+      },
+      brochureUpload: {
+        type: "string",
+        format: "binary",
+        description: "Optional replacement PDF brochure. Maximum 10MB.",
+      },
+      status: {
+        type: "string",
+        enum: ["Active", "Inactive"],
+      },
+    },
+  },
 };
 
 export default schemas;
