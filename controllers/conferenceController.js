@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 
 import Conference from "../models/Conference.js";
@@ -6,19 +5,13 @@ import Speciality from "../models/Speciality.js";
 
 import asyncHandler from "../utils/asyncHandler.js";
 
-import {
-  successResponse,
-  errorResponse,
-} from "../utils/response.js";
+import { successResponse, errorResponse } from "../utils/response.js";
 
 import buildSearchQuery from "../utils/search.js";
 import buildSortQuery from "../utils/sort.js";
 import buildFiltersQuery from "../utils/filters.js";
 
-import {
-  getPagination,
-  buildPaginationMeta,
-} from "../utils/pagination.js";
+import { getPagination, buildPaginationMeta } from "../utils/pagination.js";
 
 import {
   getCache,
@@ -33,16 +26,9 @@ import { deleteUploadedFiles } from "../middlewares/uploadConference.js";
 // Constants
 //==================================================
 
-const CONFERENCE_SEARCH_FIELDS = [
-  "conferenceName",
-  "venue",
-];
+const CONFERENCE_SEARCH_FIELDS = ["conferenceName", "venue"];
 
-const CONFERENCE_FILTER_FIELDS = [
-  "specialityId",
-  "conferenceType",
-  "status",
-];
+const CONFERENCE_FILTER_FIELDS = ["specialityId", "conferenceType", "status"];
 
 const CONFERENCE_SORT_FIELDS = [
   "conferenceName",
@@ -56,7 +42,7 @@ const CONFERENCE_SORT_FIELDS = [
 ];
 
 const CONFERENCE_SELECT_FIELDS =
-  "conferenceName specialityId startDateTime endDateTime venue conferenceType amount image banner brochureUpload status createdAt updatedAt";
+  "conferenceName specialityId startDateTime endDateTime venue conferenceType amount image banner brochureUpload conferenceDetail status createdAt updatedAt";
 
 //==================================================
 // Helper: Clear Conference Cache
@@ -85,14 +71,9 @@ const validateSpeciality = async (specialityId) => {
 // Helper: Validate Conference Type
 //==================================================
 
-const VALID_CONFERENCE_TYPES = [
-  "Paid",
-  "Free",
-  "Restricted",
-];
+const VALID_CONFERENCE_TYPES = ["Paid", "Free", "Restricted"];
 
-const isValidConferenceType = (type) =>
-  VALID_CONFERENCE_TYPES.includes(type);
+const isValidConferenceType = (type) => VALID_CONFERENCE_TYPES.includes(type);
 
 //==================================================
 // Helper: Validate Date Range
@@ -126,15 +107,9 @@ const deleteConferenceFiles = async (conference) => {
 //==================================================
 
 const buildConferenceQuery = (req, extraQuery = {}) => {
-  const searchQuery = buildSearchQuery(
-    req,
-    CONFERENCE_SEARCH_FIELDS,
-  );
+  const searchQuery = buildSearchQuery(req, CONFERENCE_SEARCH_FIELDS);
 
-  const filtersQuery = buildFiltersQuery(
-    req,
-    CONFERENCE_FILTER_FIELDS,
-  );
+  const filtersQuery = buildFiltersQuery(req, CONFERENCE_FILTER_FIELDS);
 
   return {
     ...filtersQuery,
@@ -156,6 +131,7 @@ export const createConference = asyncHandler(async (req, res) => {
     venue,
     conferenceType,
     amount,
+    conferenceDetail,
     status,
   } = req.body || {};
 
@@ -173,7 +149,8 @@ export const createConference = asyncHandler(async (req, res) => {
     !startDateTime ||
     !endDateTime ||
     !venue?.trim() ||
-    !conferenceType
+    !conferenceType ||
+    !conferenceDetail?.trim()
   ) {
     await cleanupNewUploads();
 
@@ -242,7 +219,8 @@ export const createConference = asyncHandler(async (req, res) => {
 
     return errorResponse(res, {
       statusCode: 400,
-      message: "End date time must be greater than or equal to start date time.",
+      message:
+        "End date time must be greater than or equal to start date time.",
     });
   }
 
@@ -267,11 +245,11 @@ export const createConference = asyncHandler(async (req, res) => {
       endDateTime,
       venue: venue.trim(),
       conferenceType,
-      amount:
-        conferenceType === "Paid" ? Number(amount) : undefined,
+      amount: conferenceType === "Paid" ? Number(amount) : undefined,
       image: uploadedFiles.image,
       banner: uploadedFiles.banner,
       brochureUpload: uploadedFiles.brochureUpload,
+      conferenceDetail: conferenceDetail.trim(),
       status: status || "Active",
     });
 
@@ -300,11 +278,7 @@ export const getConferences = asyncHandler(async (req, res) => {
 
   const query = buildConferenceQuery(req);
 
-  const sort = buildSortQuery(
-    req,
-    CONFERENCE_SORT_FIELDS,
-    "createdAt",
-  );
+  const sort = buildSortQuery(req, CONFERENCE_SORT_FIELDS, "createdAt");
 
   const cacheKey = `conferences:admin:${JSON.stringify({
     query,
@@ -334,11 +308,7 @@ export const getConferences = asyncHandler(async (req, res) => {
     Conference.countDocuments(query),
   ]);
 
-  const pagination = buildPaginationMeta(
-    total,
-    page,
-    limit,
-  );
+  const pagination = buildPaginationMeta(total, page, limit);
 
   const responseData = {
     data: conferences,
@@ -361,11 +331,7 @@ export const getConferences = asyncHandler(async (req, res) => {
 export const getAllConferences = asyncHandler(async (req, res) => {
   const query = buildConferenceQuery(req);
 
-  const sort = buildSortQuery(
-    req,
-    CONFERENCE_SORT_FIELDS,
-    "createdAt",
-  );
+  const sort = buildSortQuery(req, CONFERENCE_SORT_FIELDS, "createdAt");
 
   const conferences = await Conference.find(query)
     .select(CONFERENCE_SELECT_FIELDS)
@@ -423,6 +389,65 @@ export const getConferenceById = asyncHandler(async (req, res) => {
 });
 
 //==================================================
+// Public: Get Active Conference Details By ID
+//==================================================
+
+export const getPublicConferenceById =
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return errorResponse(res, {
+        statusCode: 400,
+        message: "Invalid conference ID.",
+      });
+    }
+
+    const cacheKey = `conference:public:${id}`;
+
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+      return successResponse(res, {
+        message:
+          "Conference details fetched successfully (from cache).",
+        data: cachedData,
+      });
+    }
+
+    const conference =
+      await Conference.findOne({
+        _id: id,
+        status: "Active",
+      })
+        .select(CONFERENCE_SELECT_FIELDS)
+        .populate(
+          "specialityId",
+          "specialityName",
+        );
+
+    if (!conference) {
+      return errorResponse(res, {
+        statusCode: 404,
+        message:
+          "Conference not found.",
+      });
+    }
+
+    await setCache(
+      cacheKey,
+      conference,
+      3600,
+    );
+
+    return successResponse(res, {
+      message:
+        "Conference details fetched successfully.",
+      data: conference,
+    });
+  });
+
+//==================================================
 // Update Conference (Admin Only)
 //==================================================
 
@@ -437,6 +462,7 @@ export const updateConference = asyncHandler(async (req, res) => {
     venue,
     conferenceType,
     amount,
+    conferenceDetail,
     status,
   } = req.body || {};
 
@@ -468,10 +494,7 @@ export const updateConference = asyncHandler(async (req, res) => {
 
   // Validate fields only when supplied.
 
-  if (
-    conferenceName !== undefined &&
-    !conferenceName.trim()
-  ) {
+  if (conferenceName !== undefined && !conferenceName.trim()) {
     await cleanupNewUploads();
 
     return errorResponse(res, {
@@ -480,15 +503,24 @@ export const updateConference = asyncHandler(async (req, res) => {
     });
   }
 
-  if (
-    venue !== undefined &&
-    !venue.trim()
-  ) {
+  if (venue !== undefined && !venue.trim()) {
     await cleanupNewUploads();
 
     return errorResponse(res, {
       statusCode: 400,
       message: "Venue cannot be empty.",
+    });
+  }
+
+  if (
+    conferenceDetail !== undefined &&
+    (typeof conferenceDetail !== "string" || !conferenceDetail.trim())
+  ) {
+    await cleanupNewUploads();
+
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Conference detail cannot be empty.",
     });
   }
 
@@ -511,14 +543,12 @@ export const updateConference = asyncHandler(async (req, res) => {
 
     return errorResponse(res, {
       statusCode: 400,
-      message: "End date time must be greater than or equal to start date time.",
+      message:
+        "End date time must be greater than or equal to start date time.",
     });
   }
 
-  if (
-    specialityId &&
-    !(await validateSpeciality(specialityId))
-  ) {
+  if (specialityId && !(await validateSpeciality(specialityId))) {
     await cleanupNewUploads();
 
     return errorResponse(res, {
@@ -530,8 +560,7 @@ export const updateConference = asyncHandler(async (req, res) => {
   let nextAmount;
 
   if (nextConferenceType === "Paid") {
-    nextAmount =
-      amount !== undefined ? amount : conference.amount;
+    nextAmount = amount !== undefined ? amount : conference.amount;
 
     if (
       nextAmount === undefined ||
@@ -596,6 +625,10 @@ export const updateConference = asyncHandler(async (req, res) => {
 
     if (venue !== undefined) {
       conference.venue = venue.trim();
+    }
+
+    if (conferenceDetail !== undefined) {
+      conference.conferenceDetail = conferenceDetail.trim();
     }
 
     conference.conferenceType = nextConferenceType;
@@ -673,11 +706,7 @@ export const getPublicConferences = asyncHandler(async (req, res) => {
     status: "Active",
   });
 
-  const sort = buildSortQuery(
-    req,
-    CONFERENCE_SORT_FIELDS,
-    "startDateTime",
-  );
+  const sort = buildSortQuery(req, CONFERENCE_SORT_FIELDS, "startDateTime");
 
   const cacheKey = `conferences:public:${JSON.stringify({
     query,
@@ -707,11 +736,7 @@ export const getPublicConferences = asyncHandler(async (req, res) => {
     Conference.countDocuments(query),
   ]);
 
-  const pagination = buildPaginationMeta(
-    total,
-    page,
-    limit,
-  );
+  const pagination = buildPaginationMeta(total, page, limit);
 
   const responseData = {
     data: conferences,
@@ -736,11 +761,7 @@ export const getAllPublicConferences = asyncHandler(async (req, res) => {
     status: "Active",
   });
 
-  const sort = buildSortQuery(
-    req,
-    CONFERENCE_SORT_FIELDS,
-    "startDateTime",
-  );
+  const sort = buildSortQuery(req, CONFERENCE_SORT_FIELDS, "startDateTime");
 
   const conferences = await Conference.find(query)
     .select(CONFERENCE_SELECT_FIELDS)
@@ -757,83 +778,71 @@ export const getAllPublicConferences = asyncHandler(async (req, res) => {
 // Public: Get Active Conferences By Type (Paginated)
 //==================================================
 
-export const getPublicConferencesByType = asyncHandler(
-  async (req, res) => {
-    const { conferenceType } = req.params;
+export const getPublicConferencesByType = asyncHandler(async (req, res) => {
+  const { conferenceType } = req.params;
 
-    if (!isValidConferenceType(conferenceType)) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Conference type must be Paid, Free, or Restricted.",
-      });
-    }
-
-    const { page, limit, skip } = getPagination(req);
-
-    const query = buildConferenceQuery(req, {
-      status: "Active",
-      conferenceType,
+  if (!isValidConferenceType(conferenceType)) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Conference type must be Paid, Free, or Restricted.",
     });
+  }
 
-    const sort = buildSortQuery(
-      req,
-      CONFERENCE_SORT_FIELDS,
-      "startDateTime",
-    );
+  const { page, limit, skip } = getPagination(req);
 
-    const [conferences, total] = await Promise.all([
-      Conference.find(query)
-        .select(CONFERENCE_SELECT_FIELDS)
-        .populate("specialityId", "specialityName")
-        .sort(sort)
-        .skip(skip)
-        .limit(limit),
+  const query = buildConferenceQuery(req, {
+    status: "Active",
+    conferenceType,
+  });
 
-      Conference.countDocuments(query),
-    ]);
+  const sort = buildSortQuery(req, CONFERENCE_SORT_FIELDS, "startDateTime");
 
-    return successResponse(res, {
-      message: `${conferenceType} conferences fetched successfully.`,
-      data: conferences,
-      pagination: buildPaginationMeta(total, page, limit),
-    });
-  },
-);
+  const [conferences, total] = await Promise.all([
+    Conference.find(query)
+      .select(CONFERENCE_SELECT_FIELDS)
+      .populate("specialityId", "specialityName")
+      .sort(sort)
+      .skip(skip)
+      .limit(limit),
+
+    Conference.countDocuments(query),
+  ]);
+
+  return successResponse(res, {
+    message: `${conferenceType} conferences fetched successfully.`,
+    data: conferences,
+    pagination: buildPaginationMeta(total, page, limit),
+  });
+});
 
 //==================================================
 // Public: Get Active Conferences By Type (No Pagination)
 //==================================================
 
-export const getAllPublicConferencesByType = asyncHandler(
-  async (req, res) => {
-    const { conferenceType } = req.params;
+export const getAllPublicConferencesByType = asyncHandler(async (req, res) => {
+  const { conferenceType } = req.params;
 
-    if (!isValidConferenceType(conferenceType)) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Conference type must be Paid, Free, or Restricted.",
-      });
-    }
-
-    const query = buildConferenceQuery(req, {
-      status: "Active",
-      conferenceType,
+  if (!isValidConferenceType(conferenceType)) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Conference type must be Paid, Free, or Restricted.",
     });
+  }
 
-    const sort = buildSortQuery(
-      req,
-      CONFERENCE_SORT_FIELDS,
-      "startDateTime",
-    );
+  const query = buildConferenceQuery(req, {
+    status: "Active",
+    conferenceType,
+  });
 
-    const conferences = await Conference.find(query)
-      .select(CONFERENCE_SELECT_FIELDS)
-      .populate("specialityId", "specialityName")
-      .sort(sort);
+  const sort = buildSortQuery(req, CONFERENCE_SORT_FIELDS, "startDateTime");
 
-    return successResponse(res, {
-      message: `${conferenceType} conferences fetched successfully.`,
-      data: conferences,
-    });
-  },
-);
+  const conferences = await Conference.find(query)
+    .select(CONFERENCE_SELECT_FIELDS)
+    .populate("specialityId", "specialityName")
+    .sort(sort);
+
+  return successResponse(res, {
+    message: `${conferenceType} conferences fetched successfully.`,
+    data: conferences,
+  });
+});

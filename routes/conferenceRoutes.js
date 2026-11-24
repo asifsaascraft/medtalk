@@ -6,6 +6,7 @@ import {
   getConferences,
   getAllConferences,
   getConferenceById,
+  getPublicConferenceById,
   updateConference,
   deleteConference,
   getPublicConferences,
@@ -40,6 +41,12 @@ router.get(
 router.get(
   "/public/type/:conferenceType/all",
   getAllPublicConferencesByType,
+);
+
+// Conference Details
+router.get(
+  "/public/:id",
+  getPublicConferenceById,
 );
 
 //==================================================

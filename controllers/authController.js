@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import UserSession from "../models/UserSession.js";
 import Speciality from "../models/Speciality.js";
 
+import deleteS3Object from "../utils/deleteS3Object.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 import {
@@ -1214,3 +1215,91 @@ export const adminChangePassword = asyncHandler(
     });
   },
 );
+
+
+//==================================================
+// 15. UPDATE PROFILE IMAGE
+// PUT /api/auth/profile-image
+//==================================================
+
+export const updateProfileImage =
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(
+      req.user._id,
+    );
+
+    if (!user) {
+      return errorResponse(res, {
+        statusCode: 404,
+        message: "User not found.",
+      });
+    }
+
+    if (!req.profileImageUrl) {
+      return errorResponse(res, {
+        statusCode: 400,
+        message: "Profile image is required.",
+      });
+    }
+
+    // Delete old image.
+    if (user.profileImage) {
+      await deleteS3Object(
+        user.profileImage,
+      );
+    }
+
+    user.profileImage =
+      req.profileImageUrl;
+
+    await user.save();
+
+    return successResponse(res, {
+      message:
+        "Profile image updated successfully.",
+      data: {
+        profileImage:
+          user.profileImage,
+      },
+    });
+  });
+
+  //==================================================
+// 16. DELETE PROFILE IMAGE
+// DELETE /api/auth/profile-image
+//==================================================
+
+export const removeProfileImage =
+  asyncHandler(async (req, res) => {
+    const user = await User.findById(
+      req.user._id,
+    );
+
+    if (!user) {
+      return errorResponse(res, {
+        statusCode: 404,
+        message: "User not found.",
+      });
+    }
+
+    if (!user.profileImage) {
+      return errorResponse(res, {
+        statusCode: 400,
+        message:
+          "Profile image does not exist.",
+      });
+    }
+
+    await deleteS3Object(
+      user.profileImage,
+    );
+
+    user.profileImage = null;
+
+    await user.save();
+
+    return successResponse(res, {
+      message:
+        "Profile image deleted successfully.",
+    });
+  });

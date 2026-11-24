@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 
 import protect from "../middlewares/protect.js";
 import authorize from "../middlewares/authorize.js";
+import uploadProfileImage from "../middlewares/uploadProfileImage.js";
 
 import {
   setupAdmin,
@@ -21,6 +22,8 @@ import {
   logout,
   logoutAll,
   getMe,
+  updateProfileImage,
+  removeProfileImage,
 } from "../controllers/authController.js";
 
 const router = express.Router();
@@ -161,6 +164,24 @@ router.get(
   protect,
   getMe,
 );
+
+// Upload / Replace Profile Image
+
+router.put(
+  "/profile-image",
+  protect,
+  uploadProfileImage,
+  updateProfileImage,
+);
+
+// Remove Profile Image
+
+router.delete(
+  "/profile-image",
+  protect,
+  removeProfileImage,
+);
+
 
 export default router;
 

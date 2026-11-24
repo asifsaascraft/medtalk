@@ -453,6 +453,31 @@ export const schemas = {
     },
   },
 
+  ProfileImageResponse: {
+    type: "object",
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+      message: {
+        type: "string",
+        example: "Profile image updated successfully.",
+      },
+      data: {
+        type: "object",
+        properties: {
+          profileImage: {
+            type: "string",
+            format: "uri",
+            example:
+              "https://bucket.s3.ap-south-1.amazonaws.com/users/profile-images/123.jpg",
+          },
+        },
+      },
+    },
+  },
+
   //==================================================
   // Faculty
   //==================================================
@@ -902,6 +927,11 @@ export const schemas = {
         example:
           "https://bucket.s3.ap-south-1.amazonaws.com/conferences/brochures/brochure.pdf",
       },
+      conferenceDetail: {
+        type: "string",
+        example:
+          "This conference brings together medical professionals to discuss the latest advancements in healthcare, clinical research and patient care.",
+      },
       status: {
         type: "string",
         enum: ["Active", "Inactive"],
@@ -936,6 +966,7 @@ export const schemas = {
       "image",
       "banner",
       "brochureUpload",
+      "conferenceDetail",
     ],
     properties: {
       conferenceName: {
@@ -985,6 +1016,12 @@ export const schemas = {
         type: "string",
         format: "binary",
         description: "Conference brochure PDF. Maximum 10MB.",
+      },
+      conferenceDetail: {
+        type: "string",
+        example:
+          "This conference brings together medical professionals to discuss the latest advancements in healthcare, clinical research and patient care.",
+        description: "Detailed description of the conference.",
       },
       status: {
         type: "string",
@@ -1125,6 +1162,12 @@ export const schemas = {
         type: "string",
         format: "binary",
         description: "Optional replacement PDF brochure. Maximum 10MB.",
+      },
+      conferenceDetail: {
+        type: "string",
+        example:
+          "Updated conference details including the agenda, objectives and key topics.",
+        description: "Updated conference description.",
       },
       status: {
         type: "string",

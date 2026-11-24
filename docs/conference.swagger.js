@@ -141,7 +141,7 @@ const conferencePaths = {
       tags: ["Conference"],
       summary: "Create Conference",
       description:
-        "Create a conference. Admin only. Upload image, banner and PDF brochure using multipart/form-data.",
+        "Create a conference. Admin only. Provide conference details including conferenceDetail. Upload image, banner and PDF brochure using multipart/form-data.",
       security: [{ bearerAuth: [] }],
       requestBody: multipartRequestBody,
       responses: {
@@ -226,7 +226,7 @@ const conferencePaths = {
       tags: ["Conference"],
       summary: "Update Conference",
       description:
-        "Update conference details. All fields are optional. Upload only the files you want to replace. Old S3 files are deleted after a successful database update.",
+        "Update conference details including conferenceDetail. All fields are optional. Upload only the files you want to replace. Old S3 files are deleted after a successful database update.",
       security: [{ bearerAuth: [] }],
       parameters: [idParameter],
       requestBody: {
@@ -383,6 +383,63 @@ const conferencePaths = {
       },
     },
   },
+  "/conferences/public/{id}": {
+  get: {
+    tags: ["Conference"],
+
+    summary:
+      "Get Active Conference Details",
+
+    description:
+      "Public API. Fetch a single active conference with complete details including speciality, conference images, brochure URLs and dynamic status.",
+
+    security: [],
+
+    parameters: [
+      {
+        in: "path",
+        name: "id",
+        required: true,
+        schema: {
+          type: "string",
+          example:
+            "672a12345678901234567890",
+        },
+        description:
+          "Conference MongoDB ObjectId.",
+      },
+    ],
+
+    responses: {
+      200: {
+        description:
+          "Conference details fetched successfully.",
+        content: {
+          "application/json": {
+            schema: {
+              $ref: "#/components/schemas/ConferenceSuccessResponse",
+            },
+          },
+        },
+      },
+
+      400: jsonResponse(
+        "Invalid conference ID.",
+        "AuthErrorResponse",
+      ),
+
+      404: jsonResponse(
+        "Conference not found.",
+        "AuthErrorResponse",
+      ),
+
+      500: jsonResponse(
+        "Internal server error.",
+        "AuthErrorResponse",
+      ),
+    },
+  },
+},
 };
 
 export default conferencePaths;

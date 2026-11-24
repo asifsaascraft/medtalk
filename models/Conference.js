@@ -86,6 +86,11 @@ const ConferenceSchema = new mongoose.Schema(
       trim: true,
     },
 
+    conferenceDetail: {
+      type: String,
+      required: [true, "Conference detail is required."],
+    },
+
     status: {
       type: String,
       enum: {

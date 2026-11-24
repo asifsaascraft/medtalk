@@ -1,4 +1,3 @@
-
 import {
   setupAdminExample,
   adminLoginExample,
@@ -62,21 +61,28 @@ const authPaths = {
           schema: {
             type: "string",
           },
-          description: "Admin setup secret configured in the backend environment.",
+          description:
+            "Admin setup secret configured in the backend environment.",
         },
       ],
 
-      requestBody: jsonRequest(
-        "SetupAdminRequest",
-        setupAdminExample
-      ),
+      requestBody: jsonRequest("SetupAdminRequest", setupAdminExample),
 
       responses: {
         201: response("Admin account created successfully."),
-        400: response("Missing or invalid registration fields.", "AuthErrorResponse"),
-        403: response("Invalid admin setup authorization.", "AuthErrorResponse"),
+        400: response(
+          "Missing or invalid registration fields.",
+          "AuthErrorResponse",
+        ),
+        403: response(
+          "Invalid admin setup authorization.",
+          "AuthErrorResponse",
+        ),
         404: response("Speciality not found.", "AuthErrorResponse"),
-        409: response("Admin account or contact details already exist.", "AuthErrorResponse"),
+        409: response(
+          "Admin account or contact details already exist.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -92,14 +98,12 @@ const authPaths = {
 
       security: [],
 
-      requestBody: jsonRequest(
-        "AdminLoginRequest",
-        adminLoginExample
-      ),
+      requestBody: jsonRequest("AdminLoginRequest", adminLoginExample),
 
       responses: {
         200: {
-          description: "Admin login successful. Refresh token is set in an HTTP-only cookie.",
+          description:
+            "Admin login successful. Refresh token is set in an HTTP-only cookie.",
           headers: {
             "Set-Cookie": {
               description: "HTTP-only refreshToken cookie.",
@@ -116,10 +120,19 @@ const authPaths = {
             },
           },
         },
-        400: response("Email and password are required or invalid.", "AuthErrorResponse"),
+        400: response(
+          "Email and password are required or invalid.",
+          "AuthErrorResponse",
+        ),
         401: response("Invalid email or password.", "AuthErrorResponse"),
-        409: response("A login is already being processed.", "AuthErrorResponse"),
-        423: response("Admin account is temporarily locked.", "AuthErrorResponse"),
+        409: response(
+          "A login is already being processed.",
+          "AuthErrorResponse",
+        ),
+        423: response(
+          "Admin account is temporarily locked.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -137,13 +150,18 @@ const authPaths = {
 
       requestBody: jsonRequest(
         "AdminForgotPasswordRequest",
-        adminForgotPasswordExample
+        adminForgotPasswordExample,
       ),
 
       responses: {
-        200: response("If an admin account exists, password reset instructions will be sent."),
+        200: response(
+          "If an admin account exists, password reset instructions will be sent.",
+        ),
         400: response("Invalid or missing email address.", "AuthErrorResponse"),
-        500: response("Password-reset email could not be sent.", "AuthErrorResponse"),
+        500: response(
+          "Password-reset email could not be sent.",
+          "AuthErrorResponse",
+        ),
       },
     },
   },
@@ -172,12 +190,15 @@ const authPaths = {
 
       requestBody: jsonRequest(
         "AdminResetPasswordRequest",
-        adminResetPasswordExample
+        adminResetPasswordExample,
       ),
 
       responses: {
         200: response("Admin password reset successfully."),
-        400: response("Invalid, expired, or missing token, or invalid password.", "AuthErrorResponse"),
+        400: response(
+          "Invalid, expired, or missing token, or invalid password.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -199,14 +220,23 @@ const authPaths = {
 
       requestBody: jsonRequest(
         "AdminChangePasswordRequest",
-        adminChangePasswordExample
+        adminChangePasswordExample,
       ),
 
       responses: {
         200: response("Password changed successfully. Please login again."),
-        400: response("Missing fields, invalid password, or password mismatch.", "AuthErrorResponse"),
-        401: response("Current password is incorrect or authentication failed.", "AuthErrorResponse"),
-        403: response("Only admins can change their password.", "AuthErrorResponse"),
+        400: response(
+          "Missing fields, invalid password, or password mismatch.",
+          "AuthErrorResponse",
+        ),
+        401: response(
+          "Current password is incorrect or authentication failed.",
+          "AuthErrorResponse",
+        ),
+        403: response(
+          "Only admins can change their password.",
+          "AuthErrorResponse",
+        ),
         404: response("Admin account not found.", "AuthErrorResponse"),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
@@ -227,16 +257,19 @@ const authPaths = {
 
       security: [],
 
-      requestBody: jsonRequest(
-        "RegisterUserRequest",
-        registerUserExample
-      ),
+      requestBody: jsonRequest("RegisterUserRequest", registerUserExample),
 
       responses: {
         201: response("User registered successfully."),
-        400: response("Invalid or missing registration fields.", "AuthErrorResponse"),
+        400: response(
+          "Invalid or missing registration fields.",
+          "AuthErrorResponse",
+        ),
         404: response("Speciality not found.", "AuthErrorResponse"),
-        409: response("Email or mobile number is already registered.", "AuthErrorResponse"),
+        409: response(
+          "Email or mobile number is already registered.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -252,16 +285,21 @@ const authPaths = {
 
       security: [],
 
-      requestBody: jsonRequest(
-        "SendMobileOtpRequest",
-        sendMobileOtpExample
-      ),
+      requestBody: jsonRequest("SendMobileOtpRequest", sendMobileOtpExample),
 
       responses: {
-        200: response("OTP request processed. If an active account exists, an OTP will be sent."),
+        200: response(
+          "OTP request processed. If an active account exists, an OTP will be sent.",
+        ),
         400: response("Invalid or missing mobile number.", "AuthErrorResponse"),
-        429: response("OTP request cooldown or OTP lock limit reached.", "AuthErrorResponse"),
-        500: response("SMS provider or internal server error.", "AuthErrorResponse"),
+        429: response(
+          "OTP request cooldown or OTP lock limit reached.",
+          "AuthErrorResponse",
+        ),
+        500: response(
+          "SMS provider or internal server error.",
+          "AuthErrorResponse",
+        ),
       },
     },
   },
@@ -278,7 +316,7 @@ const authPaths = {
 
       requestBody: jsonRequest(
         "VerifyMobileOtpRequest",
-        verifyMobileOtpExample
+        verifyMobileOtpExample,
       ),
 
       responses: {
@@ -302,8 +340,14 @@ const authPaths = {
         },
         400: response("Invalid, expired, or missing OTP.", "AuthErrorResponse"),
         401: response("Invalid OTP or account.", "AuthErrorResponse"),
-        409: response("A login is already being processed.", "AuthErrorResponse"),
-        429: response("Maximum OTP attempts reached or account temporarily locked.", "AuthErrorResponse"),
+        409: response(
+          "A login is already being processed.",
+          "AuthErrorResponse",
+        ),
+        429: response(
+          "Maximum OTP attempts reached or account temporarily locked.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -319,16 +363,21 @@ const authPaths = {
 
       security: [],
 
-      requestBody: jsonRequest(
-        "SendEmailOtpRequest",
-        sendEmailOtpExample
-      ),
+      requestBody: jsonRequest("SendEmailOtpRequest", sendEmailOtpExample),
 
       responses: {
-        200: response("OTP request processed. If an active account exists, an OTP will be sent."),
+        200: response(
+          "OTP request processed. If an active account exists, an OTP will be sent.",
+        ),
         400: response("Invalid or missing email address.", "AuthErrorResponse"),
-        429: response("OTP request cooldown or OTP lock limit reached.", "AuthErrorResponse"),
-        500: response("Email provider or internal server error.", "AuthErrorResponse"),
+        429: response(
+          "OTP request cooldown or OTP lock limit reached.",
+          "AuthErrorResponse",
+        ),
+        500: response(
+          "Email provider or internal server error.",
+          "AuthErrorResponse",
+        ),
       },
     },
   },
@@ -343,10 +392,7 @@ const authPaths = {
 
       security: [],
 
-      requestBody: jsonRequest(
-        "VerifyEmailOtpRequest",
-        verifyEmailOtpExample
-      ),
+      requestBody: jsonRequest("VerifyEmailOtpRequest", verifyEmailOtpExample),
 
       responses: {
         200: {
@@ -369,8 +415,14 @@ const authPaths = {
         },
         400: response("Invalid, expired, or missing OTP.", "AuthErrorResponse"),
         401: response("Invalid OTP or account.", "AuthErrorResponse"),
-        409: response("A login is already being processed.", "AuthErrorResponse"),
-        429: response("Maximum OTP attempts reached or account temporarily locked.", "AuthErrorResponse"),
+        409: response(
+          "A login is already being processed.",
+          "AuthErrorResponse",
+        ),
+        429: response(
+          "Maximum OTP attempts reached or account temporarily locked.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -413,7 +465,10 @@ const authPaths = {
             },
           },
         },
-        401: response("Missing, invalid, expired, or revoked refresh token.", "AuthErrorResponse"),
+        401: response(
+          "Missing, invalid, expired, or revoked refresh token.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -452,7 +507,10 @@ const authPaths = {
             },
           },
         },
-        401: response("Unauthorized or session already revoked.", "AuthErrorResponse"),
+        401: response(
+          "Unauthorized or session already revoked.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -491,7 +549,10 @@ const authPaths = {
             },
           },
         },
-        401: response("Unauthorized or session already revoked.", "AuthErrorResponse"),
+        401: response(
+          "Unauthorized or session already revoked.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
       },
     },
@@ -522,8 +583,85 @@ const authPaths = {
             },
           },
         },
-        401: response("Unauthorized, expired token, or revoked session.", "AuthErrorResponse"),
+        401: response(
+          "Unauthorized, expired token, or revoked session.",
+          "AuthErrorResponse",
+        ),
         500: response("Internal server error.", "AuthErrorResponse"),
+      },
+    },
+  },
+  "/auth/profile-image": {
+    put: {
+      tags: ["Authentication"],
+      summary: "Upload Profile Image",
+
+      description:
+        "Upload or replace the current authenticated user's profile image.",
+
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+
+      requestBody: {
+        required: true,
+        content: {
+          "multipart/form-data": {
+            schema: {
+              type: "object",
+              required: ["profileImage"],
+              properties: {
+                profileImage: {
+                  type: "string",
+                  format: "binary",
+                },
+              },
+            },
+          },
+        },
+      },
+
+      responses: {
+        200: {
+          description: "Profile image updated successfully.",
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/ProfileImageResponse",
+              },
+            },
+          },
+        },
+
+        400: response("Invalid file.", "AuthErrorResponse"),
+
+        401: response("Unauthorized.", "AuthErrorResponse"),
+
+        404: response("User not found.", "AuthErrorResponse"),
+      },
+    },
+
+    delete: {
+      tags: ["Authentication"],
+
+      summary: "Delete Profile Image",
+
+      description: "Deletes authenticated user's profile image.",
+
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+
+      responses: {
+        200: response("Profile image deleted successfully."),
+
+        401: response("Unauthorized.", "AuthErrorResponse"),
+
+        404: response("User not found.", "AuthErrorResponse"),
       },
     },
   },
