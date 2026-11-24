@@ -1227,6 +1227,83 @@ export const schemas = {
     },
   },
 
+  Coupon: {
+    type: "object",
+    properties: {
+      _id: {
+        type: "string",
+        example: "672c12345678901234567890",
+      },
+
+      conferenceId: {
+        oneOf: [
+          {
+            type: "string",
+            example: "672a12345678901234567890",
+          },
+          {
+            $ref: "#/components/schemas/Conference",
+          },
+        ],
+      },
+
+      userId: {
+        oneOf: [
+          {
+            type: "string",
+            example: "672a12345678901234567890",
+          },
+          {
+            $ref: "#/components/schemas/UserManagementUser",
+          },
+        ],
+      },
+
+      fullName: {
+        type: "string",
+        example: "Rahul Sharma",
+      },
+
+      email: {
+        type: "string",
+        format: "email",
+        example: "rahul@example.com",
+      },
+
+      mobile: {
+        type: "string",
+        nullable: true,
+        example: "9876543210",
+      },
+
+      couponCode: {
+        type: "string",
+        example: "A7F2C9D1",
+      },
+
+      importedAt: {
+        type: "string",
+        format: "date-time",
+      },
+
+      status: {
+        type: "string",
+        enum: ["Unused", "Used", "Expired"],
+        example: "Unused",
+      },
+
+      createdAt: {
+        type: "string",
+        format: "date-time",
+      },
+
+      updatedAt: {
+        type: "string",
+        format: "date-time",
+      },
+    },
+  },
+
   CreateHallRequest: {
     type: "object",
     required: ["hallName", "streamLink"],
@@ -1353,6 +1430,98 @@ export const schemas = {
           hasPrevPage: {
             type: "boolean",
             example: false,
+          },
+        },
+      },
+    },
+  },
+  CouponImportRequest: {
+    type: "object",
+
+    required: ["file"],
+
+    properties: {
+      file: {
+        type: "string",
+        format: "binary",
+        description:
+          "Excel (.xlsx) or CSV file containing name, email and optional mobile columns.",
+      },
+    },
+  },
+  CouponResponse: {
+    type: "object",
+
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+
+      message: {
+        type: "string",
+        example: "Coupon fetched successfully.",
+      },
+
+      data: {
+        $ref: "#/components/schemas/Coupon",
+      },
+    },
+  },
+  CouponsResponse: {
+    type: "object",
+
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+
+      message: {
+        type: "string",
+        example: "Coupons fetched successfully.",
+      },
+
+      data: {
+        type: "array",
+
+        items: {
+          $ref: "#/components/schemas/Coupon",
+        },
+      },
+    },
+  },
+  CouponImportResponse: {
+    type: "object",
+
+    properties: {
+      success: {
+        type: "boolean",
+        example: true,
+      },
+
+      message: {
+        type: "string",
+        example: "Coupons imported successfully.",
+      },
+
+      data: {
+        type: "object",
+
+        properties: {
+          conferenceId: {
+            type: "string",
+            example: "672a12345678901234567890",
+          },
+
+          importedCount: {
+            type: "integer",
+            example: 150,
+          },
+
+          skippedCount: {
+            type: "integer",
+            example: 10,
           },
         },
       },

@@ -1,4 +1,3 @@
-
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
@@ -9,10 +8,7 @@ import Speciality from "../models/Speciality.js";
 import deleteS3Object from "../utils/deleteS3Object.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
-import {
-  successResponse,
-  errorResponse,
-} from "../utils/response.js";
+import { successResponse, errorResponse } from "../utils/response.js";
 
 import generateOtp from "../utils/generateOtp.js";
 import generateTokens from "../utils/generateTokens.js";
@@ -33,13 +29,9 @@ import {
 // Constants
 //==================================================
 
-const OTP_EXPIRY_MINUTES = Number(
-  process.env.OTP_EXPIRES_MINUTES || 5,
-);
+const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRES_MINUTES || 5);
 
-const OTP_MAX_ATTEMPTS = Number(
-  process.env.OTP_MAX_ATTEMPTS || 5,
-);
+const OTP_MAX_ATTEMPTS = Number(process.env.OTP_MAX_ATTEMPTS || 5);
 
 const OTP_RESEND_COOLDOWN_SECONDS = Number(
   process.env.OTP_RESEND_COOLDOWN_SECONDS || 60,
@@ -57,8 +49,7 @@ const PASSWORD_RESET_MINUTES = Number(
 
 const isValidEmail = (email) => {
   return (
-    typeof email === "string" &&
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+    typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   );
 };
 
@@ -95,10 +86,7 @@ const compareSecrets = (provided, actual) => {
     return false;
   }
 
-  return crypto.timingSafeEqual(
-    providedBuffer,
-    actualBuffer,
-  );
+  return crypto.timingSafeEqual(providedBuffer, actualBuffer);
 };
 
 //==================================================
@@ -164,24 +152,13 @@ const isDuplicateKeyError = (error) => {
 //==================================================
 
 export const setupAdmin = asyncHandler(async (req, res) => {
-  const {
-    fullName,
-    email,
-    mobile,
-    affiliation,
-    specialityId,
-    password,
-  } = req.body;
+  const { fullName, email, mobile, affiliation, specialityId, password } =
+    req.body;
 
   // Validate setup secret.
   const providedSecret = req.headers["x-admin-setup-secret"];
 
-  if (
-    !compareSecrets(
-      providedSecret,
-      process.env.ADMIN_SETUP_SECRET,
-    )
-  ) {
+  if (!compareSecrets(providedSecret, process.env.ADMIN_SETUP_SECRET)) {
     return errorResponse(res, {
       statusCode: 403,
       message: "Invalid admin setup authorization.",
@@ -192,7 +169,6 @@ export const setupAdmin = asyncHandler(async (req, res) => {
   if (
     !fullName?.trim() ||
     !email?.trim() ||
-    !mobile?.trim() ||
     !affiliation?.trim() ||
     !specialityId ||
     !password
@@ -338,11 +314,7 @@ export const adminLogin = asyncHandler(async (req, res) => {
   await admin.updateLoginInfo();
 
   try {
-    const { accessToken } = await createLoginSession(
-      admin,
-      req,
-      res,
-    );
+    const { accessToken } = await createLoginSession(admin, req, res);
 
     return successResponse(res, {
       message: "Admin login successful.",
@@ -369,18 +341,11 @@ export const adminLogin = asyncHandler(async (req, res) => {
 //==================================================
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const {
-    fullName,
-    email,
-    mobile,
-    affiliation,
-    specialityId,
-  } = req.body;
+  const { fullName, email, mobile, affiliation, specialityId } = req.body;
 
   if (
     !fullName?.trim() ||
     !email?.trim() ||
-    !mobile?.trim() ||
     !affiliation?.trim() ||
     !specialityId
   ) {
@@ -394,13 +359,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     return errorResponse(res, {
       statusCode: 400,
       message: "Please enter a valid email address.",
-    });
-  }
-
-  if (!/^[6-9]\d{9}$/.test(mobile.trim())) {
-    return errorResponse(res, {
-      statusCode: 400,
-      message: "Please enter a valid 10-digit mobile number.",
     });
   }
 
@@ -422,11 +380,20 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
+  const duplicateConditions = [
+    {
+      email: email.trim().toLowerCase(),
+    },
+  ];
+
+  if (mobile?.trim()) {
+    duplicateConditions.push({
+      mobile: mobile.trim(),
+    });
+  }
+
   const existingUser = await User.findOne({
-    $or: [
-      { email: email.trim().toLowerCase() },
-      { mobile: mobile.trim() },
-    ],
+    $or: duplicateConditions,
   });
 
   if (existingUser) {
@@ -470,12 +437,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 // Helper: Send User Login OTP
 //==================================================
 
-const sendUserLoginOtp = async ({
-  identifier,
-  channel,
-  req,
-  res,
-}) => {
+const sendUserLoginOtp = async ({ identifier, channel, req, res }) => {
   if (!identifier || typeof identifier !== "string") {
     return errorResponse(res, {
       statusCode: 400,
@@ -485,20 +447,14 @@ const sendUserLoginOtp = async ({
 
   const normalizedIdentifier = identifier.trim().toLowerCase();
 
-  if (
-    channel === "email" &&
-    !isValidEmail(normalizedIdentifier)
-  ) {
+  if (channel === "email" && !isValidEmail(normalizedIdentifier)) {
     return errorResponse(res, {
       statusCode: 400,
       message: "Please enter a valid email address.",
     });
   }
 
-  if (
-    channel === "mobile" &&
-    !/^[6-9]\d{9}$/.test(identifier.trim())
-  ) {
+  if (channel === "mobile" && !/^[6-9]\d{9}$/.test(identifier.trim())) {
     return errorResponse(res, {
       statusCode: 400,
       message: "Please enter a valid 10-digit mobile number.",
@@ -529,8 +485,7 @@ const sendUserLoginOtp = async ({
 
   // Check resend cooldown.
   if (user.otpLastSentAt) {
-    const elapsedSeconds =
-      (Date.now() - user.otpLastSentAt.getTime()) / 1000;
+    const elapsedSeconds = (Date.now() - user.otpLastSentAt.getTime()) / 1000;
 
     if (elapsedSeconds < OTP_RESEND_COOLDOWN_SECONDS) {
       const remainingSeconds = Math.ceil(
@@ -566,9 +521,7 @@ const sendUserLoginOtp = async ({
   // Save OTP only after the provider accepts the request.
   user.otpHash = hashOtp(otp);
 
-  user.otpExpiresAt = new Date(
-    Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000,
-  );
+  user.otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
   user.otpAttempts = 0;
   user.otpLastSentAt = new Date();
@@ -618,13 +571,7 @@ export const sendEmailOtp = asyncHandler(async (req, res) => {
 // Helper: Verify User OTP
 //==================================================
 
-const verifyUserLoginOtp = async ({
-  identifier,
-  otp,
-  channel,
-  req,
-  res,
-}) => {
+const verifyUserLoginOtp = async ({ identifier, otp, channel, req, res }) => {
   if (!identifier || !otp) {
     return errorResponse(res, {
       statusCode: 400,
@@ -669,10 +616,7 @@ const verifyUserLoginOtp = async ({
     });
   }
 
-  if (
-    !user.otpExpiresAt ||
-    user.otpExpiresAt <= new Date()
-  ) {
+  if (!user.otpExpiresAt || user.otpExpiresAt <= new Date()) {
     user.otpHash = null;
     user.otpExpiresAt = null;
     user.otpAttempts = 0;
@@ -688,18 +632,13 @@ const verifyUserLoginOtp = async ({
 
   const submittedHash = hashOtp(otp);
 
-  const isValid = verifyOtp(
-    submittedHash,
-    user.otpHash,
-  );
+  const isValid = verifyOtp(submittedHash, user.otpHash);
 
   if (!isValid) {
     user.otpAttempts += 1;
 
     if (user.otpAttempts >= OTP_MAX_ATTEMPTS) {
-      user.otpLockedUntil = new Date(
-        Date.now() + OTP_LOCK_MINUTES * 60 * 1000,
-      );
+      user.otpLockedUntil = new Date(Date.now() + OTP_LOCK_MINUTES * 60 * 1000);
 
       user.otpHash = null;
       user.otpExpiresAt = null;
@@ -731,11 +670,7 @@ const verifyUserLoginOtp = async ({
   await user.save();
 
   try {
-    const { accessToken } = await createLoginSession(
-      user,
-      req,
-      res,
-    );
+    const { accessToken } = await createLoginSession(user, req, res);
 
     return successResponse(res, {
       message: "Login successful.",
@@ -795,115 +730,110 @@ export const verifyEmailOtp = asyncHandler(async (req, res) => {
 // POST /api/auth/refresh-token
 //==================================================
 
-export const refreshAccessToken = asyncHandler(
-  async (req, res) => {
-    const refreshToken = req.cookies?.refreshToken;
+export const refreshAccessToken = asyncHandler(async (req, res) => {
+  const refreshToken = req.cookies?.refreshToken;
 
-    if (!refreshToken) {
-      return errorResponse(res, {
-        statusCode: 401,
-        message: "Refresh token is required. Please login again.",
-      });
-    }
-
-    let decoded;
-
-    try {
-      decoded = jwt.verify(
-        refreshToken,
-        process.env.JWT_REFRESH_SECRET,
-      );
-    } catch (error) {
-      clearRefreshTokenCookie(res);
-
-      return errorResponse(res, {
-        statusCode: 401,
-        message: "Invalid or expired refresh token. Please login again.",
-      });
-    }
-
-    if (!decoded.id || !decoded.sessionId) {
-      clearRefreshTokenCookie(res);
-
-      return errorResponse(res, {
-        statusCode: 401,
-        message: "Invalid refresh token.",
-      });
-    }
-
-    const session = await UserSession.findOne({
-      user: decoded.id,
-      sessionId: decoded.sessionId,
-      isActive: true,
-      expiresAt: { $gt: new Date() },
-    }).select("+refreshTokenHash");
-
-    if (
-      !session ||
-      !session.refreshTokenHash ||
-      session.refreshTokenHash !== hashToken(refreshToken)
-    ) {
-      clearRefreshTokenCookie(res);
-
-      return errorResponse(res, {
-        statusCode: 401,
-        message: "Session expired or revoked. Please login again.",
-      });
-    }
-
-    const user = await User.findById(decoded.id);
-
-    if (!user || user.status !== "active") {
-      clearRefreshTokenCookie(res);
-
-      return errorResponse(res, {
-        statusCode: 401,
-        message: "Account is unavailable. Please login again.",
-      });
-    }
-
-    // Rotate refresh token but preserve the same session ID.
-    const accessToken = jwt.sign(
-      {
-        id: user._id,
-        role: user.role,
-        sessionId: session.sessionId,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: process.env.JWT_EXPIRES || "15m",
-      },
-    );
-
-    const newRefreshToken = jwt.sign(
-      {
-        id: user._id,
-        sessionId: session.sessionId,
-      },
-      process.env.JWT_REFRESH_SECRET,
-      {
-        expiresIn: process.env.JWT_REFRESH_EXPIRES || "7d",
-      },
-    );
-
-    const decodedRefresh = jwt.decode(newRefreshToken);
-
-    session.refreshTokenHash = hashToken(newRefreshToken);
-    session.expiresAt = new Date(decodedRefresh.exp * 1000);
-    session.lastActivityAt = new Date();
-
-    await session.save();
-
-    setRefreshTokenCookie(res, newRefreshToken);
-
-    return successResponse(res, {
-      message: "Access token refreshed successfully.",
-      data: {
-        accessToken,
-      },
+  if (!refreshToken) {
+    return errorResponse(res, {
+      statusCode: 401,
+      message: "Refresh token is required. Please login again.",
     });
-  },
-);
+  }
+
+  let decoded;
+
+  try {
+    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  } catch (error) {
+    clearRefreshTokenCookie(res);
+
+    return errorResponse(res, {
+      statusCode: 401,
+      message: "Invalid or expired refresh token. Please login again.",
+    });
+  }
+
+  if (!decoded.id || !decoded.sessionId) {
+    clearRefreshTokenCookie(res);
+
+    return errorResponse(res, {
+      statusCode: 401,
+      message: "Invalid refresh token.",
+    });
+  }
+
+  const session = await UserSession.findOne({
+    user: decoded.id,
+    sessionId: decoded.sessionId,
+    isActive: true,
+    expiresAt: { $gt: new Date() },
+  }).select("+refreshTokenHash");
+
+  if (
+    !session ||
+    !session.refreshTokenHash ||
+    session.refreshTokenHash !== hashToken(refreshToken)
+  ) {
+    clearRefreshTokenCookie(res);
+
+    return errorResponse(res, {
+      statusCode: 401,
+      message: "Session expired or revoked. Please login again.",
+    });
+  }
+
+  const user = await User.findById(decoded.id);
+
+  if (!user || user.status !== "active") {
+    clearRefreshTokenCookie(res);
+
+    return errorResponse(res, {
+      statusCode: 401,
+      message: "Account is unavailable. Please login again.",
+    });
+  }
+
+  // Rotate refresh token but preserve the same session ID.
+  const accessToken = jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+      sessionId: session.sessionId,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES || "15m",
+    },
+  );
+
+  const newRefreshToken = jwt.sign(
+    {
+      id: user._id,
+      sessionId: session.sessionId,
+    },
+    process.env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES || "7d",
+    },
+  );
+
+  const decodedRefresh = jwt.decode(newRefreshToken);
+
+  session.refreshTokenHash = hashToken(newRefreshToken);
+  session.expiresAt = new Date(decodedRefresh.exp * 1000);
+  session.lastActivityAt = new Date();
+
+  await session.save();
+
+  setRefreshTokenCookie(res, newRefreshToken);
+
+  return successResponse(res, {
+    message: "Access token refreshed successfully.",
+    data: {
+      accessToken,
+    },
+  });
+});
 
 //==================================================
 // 9. LOGOUT
@@ -972,334 +902,304 @@ export const getMe = asyncHandler(async (req, res) => {
 // POST /api/auth/admin/forgot-password
 //==================================================
 
-export const adminForgotPassword = asyncHandler(
-  async (req, res) => {
-    const { email } = req.body;
+export const adminForgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
 
-    if (!email?.trim() || !isValidEmail(email)) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Please enter a valid email address.",
-      });
-    }
-
-    const admin = await User.findOne({
-      email: email.trim().toLowerCase(),
-      role: "admin",
+  if (!email?.trim() || !isValidEmail(email)) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Please enter a valid email address.",
     });
+  }
 
-    // Generic response prevents account enumeration.
-    if (!admin) {
-      return successResponse(res, {
-        message:
-          "If an admin account exists, password reset instructions will be sent.",
-      });
-    }
+  const admin = await User.findOne({
+    email: email.trim().toLowerCase(),
+    role: "admin",
+  });
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    admin.passwordResetToken = hashToken(resetToken);
-
-    admin.passwordResetExpires = new Date(
-      Date.now() + PASSWORD_RESET_MINUTES * 60 * 1000,
-    );
-
-    await admin.save();
-
-    const frontendUrl = process.env.ADMIN_FRONTEND_URL;
-
-    if (!frontendUrl || !process.env.ZEPTO_PASSWORD_RESET_TEMPLATE_KEY) {
-      throw new Error(
-        "Admin password reset email configuration is missing.",
-      );
-    }
-
-    const resetUrl =
-      `${frontendUrl.replace(/\/$/, "")}/reset-password/${resetToken}`;
-
-    try {
-      await sendEmail({
-        to: admin.email,
-        name: admin.fullName,
-        subject: "MedTalk Admin Password Reset",
-        templateKey: process.env.ZEPTO_PASSWORD_RESET_TEMPLATE_KEY,
-        mergeInfo: {
-          fullName: admin.fullName,
-          resetUrl,
-          expiryMinutes: PASSWORD_RESET_MINUTES,
-        },
-      });
-    } catch (error) {
-      // Invalidate token if email delivery fails.
-      admin.passwordResetToken = null;
-      admin.passwordResetExpires = null;
-
-      await admin.save();
-
-      throw error;
-    }
-
+  // Generic response prevents account enumeration.
+  if (!admin) {
     return successResponse(res, {
       message:
         "If an admin account exists, password reset instructions will be sent.",
     });
-  },
-);
+  }
+
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  admin.passwordResetToken = hashToken(resetToken);
+
+  admin.passwordResetExpires = new Date(
+    Date.now() + PASSWORD_RESET_MINUTES * 60 * 1000,
+  );
+
+  await admin.save();
+
+  const frontendUrl = process.env.ADMIN_FRONTEND_URL;
+
+  if (!frontendUrl || !process.env.ZEPTO_PASSWORD_RESET_TEMPLATE_KEY) {
+    throw new Error("Admin password reset email configuration is missing.");
+  }
+
+  const resetUrl = `${frontendUrl.replace(/\/$/, "")}/reset-password/${resetToken}`;
+
+  try {
+    await sendEmail({
+      to: admin.email,
+      name: admin.fullName,
+      subject: "MedTalk Admin Password Reset",
+      templateKey: process.env.ZEPTO_PASSWORD_RESET_TEMPLATE_KEY,
+      mergeInfo: {
+        fullName: admin.fullName,
+        resetUrl,
+        expiryMinutes: PASSWORD_RESET_MINUTES,
+      },
+    });
+  } catch (error) {
+    // Invalidate token if email delivery fails.
+    admin.passwordResetToken = null;
+    admin.passwordResetExpires = null;
+
+    await admin.save();
+
+    throw error;
+  }
+
+  return successResponse(res, {
+    message:
+      "If an admin account exists, password reset instructions will be sent.",
+  });
+});
 
 //==================================================
 // 13. ADMIN RESET PASSWORD
 // POST /api/auth/admin/reset-password/:token
 //==================================================
 
-export const adminResetPassword = asyncHandler(
-  async (req, res) => {
-    const { token } = req.params;
-    const { password, confirmPassword } = req.body;
+export const adminResetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password, confirmPassword } = req.body;
 
-    if (!token) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Password reset token is required.",
-      });
-    }
-
-    if (!isValidPassword(password)) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Password must contain 8 to 128 characters.",
-      });
-    }
-
-    if (password !== confirmPassword) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Password and confirm password do not match.",
-      });
-    }
-
-    const admin = await User.findOne({
-      role: "admin",
-      passwordResetToken: hashToken(token),
-      passwordResetExpires: { $gt: new Date() },
-    }).select("+passwordResetToken");
-
-    if (!admin) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Invalid or expired password reset token.",
-      });
-    }
-
-    admin.password = password;
-    admin.passwordResetToken = null;
-    admin.passwordResetExpires = null;
-
-    // The User pre-save hook hashes the new password.
-    await admin.save();
-
-    // Revoke every existing login session.
-    const now = new Date();
-
-    await UserSession.updateMany(
-      {
-        user: admin._id,
-        isActive: true,
-      },
-      {
-        $set: {
-          isActive: false,
-          loggedOutAt: now,
-          revokedAt: now,
-          revokeReason: "password_changed",
-        },
-      },
-    );
-
-    clearRefreshTokenCookie(res);
-
-    return successResponse(res, {
-      message: "Admin password reset successfully. Please login again.",
+  if (!token) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Password reset token is required.",
     });
-  },
-);
+  }
+
+  if (!isValidPassword(password)) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Password must contain 8 to 128 characters.",
+    });
+  }
+
+  if (password !== confirmPassword) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Password and confirm password do not match.",
+    });
+  }
+
+  const admin = await User.findOne({
+    role: "admin",
+    passwordResetToken: hashToken(token),
+    passwordResetExpires: { $gt: new Date() },
+  }).select("+passwordResetToken");
+
+  if (!admin) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Invalid or expired password reset token.",
+    });
+  }
+
+  admin.password = password;
+  admin.passwordResetToken = null;
+  admin.passwordResetExpires = null;
+
+  // The User pre-save hook hashes the new password.
+  await admin.save();
+
+  // Revoke every existing login session.
+  const now = new Date();
+
+  await UserSession.updateMany(
+    {
+      user: admin._id,
+      isActive: true,
+    },
+    {
+      $set: {
+        isActive: false,
+        loggedOutAt: now,
+        revokedAt: now,
+        revokeReason: "password_changed",
+      },
+    },
+  );
+
+  clearRefreshTokenCookie(res);
+
+  return successResponse(res, {
+    message: "Admin password reset successfully. Please login again.",
+  });
+});
 
 //==================================================
 // 14. ADMIN CHANGE PASSWORD
 // POST /api/auth/admin/change-password
 //==================================================
 
-export const adminChangePassword = asyncHandler(
-  async (req, res) => {
-    const {
-      currentPassword,
-      newPassword,
-      confirmPassword,
-    } = req.body;
+export const adminChangePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "All password fields are required.",
-      });
-    }
-
-    if (!isValidPassword(newPassword)) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "New password must contain 8 to 128 characters.",
-      });
-    }
-
-    if (newPassword !== confirmPassword) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "New password and confirm password do not match.",
-      });
-    }
-
-    const admin = await User.findOne({
-      _id: req.user._id,
-      role: "admin",
-    }).select("+password");
-
-    if (!admin) {
-      return errorResponse(res, {
-        statusCode: 404,
-        message: "Admin account not found.",
-      });
-    }
-
-    const isPasswordCorrect =
-      await admin.matchPassword(currentPassword);
-
-    if (!isPasswordCorrect) {
-      return errorResponse(res, {
-        statusCode: 401,
-        message: "Current password is incorrect.",
-      });
-    }
-
-    if (currentPassword === newPassword) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "New password must be different from current password.",
-      });
-    }
-
-    admin.password = newPassword;
-
-    await admin.save();
-
-    // Revoke all sessions after password change.
-    const now = new Date();
-
-    await UserSession.updateMany(
-      {
-        user: admin._id,
-        isActive: true,
-      },
-      {
-        $set: {
-          isActive: false,
-          loggedOutAt: now,
-          revokedAt: now,
-          revokeReason: "password_changed",
-        },
-      },
-    );
-
-    clearRefreshTokenCookie(res);
-
-    return successResponse(res, {
-      message: "Password changed successfully. Please login again.",
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "All password fields are required.",
     });
-  },
-);
+  }
 
+  if (!isValidPassword(newPassword)) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "New password must contain 8 to 128 characters.",
+    });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "New password and confirm password do not match.",
+    });
+  }
+
+  const admin = await User.findOne({
+    _id: req.user._id,
+    role: "admin",
+  }).select("+password");
+
+  if (!admin) {
+    return errorResponse(res, {
+      statusCode: 404,
+      message: "Admin account not found.",
+    });
+  }
+
+  const isPasswordCorrect = await admin.matchPassword(currentPassword);
+
+  if (!isPasswordCorrect) {
+    return errorResponse(res, {
+      statusCode: 401,
+      message: "Current password is incorrect.",
+    });
+  }
+
+  if (currentPassword === newPassword) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "New password must be different from current password.",
+    });
+  }
+
+  admin.password = newPassword;
+
+  await admin.save();
+
+  // Revoke all sessions after password change.
+  const now = new Date();
+
+  await UserSession.updateMany(
+    {
+      user: admin._id,
+      isActive: true,
+    },
+    {
+      $set: {
+        isActive: false,
+        loggedOutAt: now,
+        revokedAt: now,
+        revokeReason: "password_changed",
+      },
+    },
+  );
+
+  clearRefreshTokenCookie(res);
+
+  return successResponse(res, {
+    message: "Password changed successfully. Please login again.",
+  });
+});
 
 //==================================================
 // 15. UPDATE PROFILE IMAGE
 // PUT /api/auth/profile-image
 //==================================================
 
-export const updateProfileImage =
-  asyncHandler(async (req, res) => {
-    const user = await User.findById(
-      req.user._id,
-    );
+export const updateProfileImage = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return errorResponse(res, {
-        statusCode: 404,
-        message: "User not found.",
-      });
-    }
-
-    if (!req.profileImageUrl) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message: "Profile image is required.",
-      });
-    }
-
-    // Delete old image.
-    if (user.profileImage) {
-      await deleteS3Object(
-        user.profileImage,
-      );
-    }
-
-    user.profileImage =
-      req.profileImageUrl;
-
-    await user.save();
-
-    return successResponse(res, {
-      message:
-        "Profile image updated successfully.",
-      data: {
-        profileImage:
-          user.profileImage,
-      },
+  if (!user) {
+    return errorResponse(res, {
+      statusCode: 404,
+      message: "User not found.",
     });
-  });
+  }
 
-  //==================================================
+  if (!req.profileImageUrl) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Profile image is required.",
+    });
+  }
+
+  // Delete old image.
+  if (user.profileImage) {
+    await deleteS3Object(user.profileImage);
+  }
+
+  user.profileImage = req.profileImageUrl;
+
+  await user.save();
+
+  return successResponse(res, {
+    message: "Profile image updated successfully.",
+    data: {
+      profileImage: user.profileImage,
+    },
+  });
+});
+
+//==================================================
 // 16. DELETE PROFILE IMAGE
 // DELETE /api/auth/profile-image
 //==================================================
 
-export const removeProfileImage =
-  asyncHandler(async (req, res) => {
-    const user = await User.findById(
-      req.user._id,
-    );
+export const removeProfileImage = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return errorResponse(res, {
-        statusCode: 404,
-        message: "User not found.",
-      });
-    }
-
-    if (!user.profileImage) {
-      return errorResponse(res, {
-        statusCode: 400,
-        message:
-          "Profile image does not exist.",
-      });
-    }
-
-    await deleteS3Object(
-      user.profileImage,
-    );
-
-    user.profileImage = null;
-
-    await user.save();
-
-    return successResponse(res, {
-      message:
-        "Profile image deleted successfully.",
+  if (!user) {
+    return errorResponse(res, {
+      statusCode: 404,
+      message: "User not found.",
     });
+  }
+
+  if (!user.profileImage) {
+    return errorResponse(res, {
+      statusCode: 400,
+      message: "Profile image does not exist.",
+    });
+  }
+
+  await deleteS3Object(user.profileImage);
+
+  user.profileImage = null;
+
+  await user.save();
+
+  return successResponse(res, {
+    message: "Profile image deleted successfully.",
   });
+});

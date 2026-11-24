@@ -30,10 +30,8 @@ const UserSchema = new mongoose.Schema(
 
     mobile: {
       type: String,
-      required: [true, "Mobile number is required."],
       trim: true,
-      unique: true,
-      match: [/^[6-9]\d{9}$/, "Please enter a valid mobile number."],
+      default: null,
     },
 
     affiliation: {
@@ -289,16 +287,12 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
 
 // Check Password Changed After JWT
 
-UserSchema.methods.changedPasswordAfter = function (
-  JWTTimestamp,
-) {
+UserSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (!this.passwordChangedAt || !JWTTimestamp) {
     return false;
   }
 
-  const changedTimestamp = Math.floor(
-    this.passwordChangedAt.getTime() / 1000,
-  );
+  const changedTimestamp = Math.floor(this.passwordChangedAt.getTime() / 1000);
 
   return JWTTimestamp < changedTimestamp;
 };

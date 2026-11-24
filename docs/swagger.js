@@ -54,6 +54,11 @@ const options = {
         name: "Admin - Halls",
         description: "Manage Conference Halls and their live stream links.",
       },
+      {
+        name: "Admin - Coupons",
+        description:
+          "Import Conference Coupons using Excel or CSV files and manage Conference Coupons.",
+      },
     ],
 
     components: {
